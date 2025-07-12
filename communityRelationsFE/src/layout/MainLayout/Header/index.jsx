@@ -4,6 +4,7 @@ import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 
 import LogoSection from '../LogoSection';
+import HeaderLogo from '../LogoSection/HeaderLogo';
 
 import AdminSection from './AdminSection';
 
@@ -48,7 +49,9 @@ export default function Header() {
         >
           <IconMenu2 stroke={1.5} size="20px" />
         </Avatar>
-        <LogoSection />
+        
+  <HeaderLogo />
+
       </Box>
 
       {/* Spacer pushes right section to far end */}

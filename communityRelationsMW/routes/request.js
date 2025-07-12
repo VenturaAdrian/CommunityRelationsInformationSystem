@@ -43,10 +43,12 @@ const archiver = require('archiver');
         emp_role,
         updated_by,
         first_name,
-        last_name
+        last_name,
+        currentUserId
       } = req.body;
 
-      
+    const currentUserData = await knex('users_master').where({id_master: currentUserId}).first();
+    console.log('CURRENT USER DATA:',currentUserData)
 
     try{
       const [user] = await knex('users_master'). insert({
@@ -67,14 +69,29 @@ const archiver = require('archiver');
 
         const id_master = user.id_master || user;
 
-        await knex('users_logs').insert({
+        const currentUserPosition = currentUserData.emp_position
+
+        if(currentUserPosition === 'super-admin'){
+          await knex('users_logs').insert({
           user_id: id_master,
           emp_firstname: emp_firstname,
           emp_lastname: emp_lastname,
           updated_by: updated_by,
           time_date: currentTimestamp,
-          changes_made: first_name+ ' '+ last_name + ' registered '+ user_name
+          changes_made: 'Super-admin: '+ first_name+ ' '+ last_name + ' registered '+  user_name + ', Role: '+ emp_role+ ', Position: ' + emp_position
         })
+        }else{
+          await knex('users_logs').insert({
+          user_id: id_master,
+          emp_firstname: emp_firstname,
+          emp_lastname: emp_lastname,
+          updated_by: updated_by,
+          time_date: currentTimestamp,
+          changes_made: 'Admin: '+ first_name+ ' '+ last_name + ' registered '+  user_name + ', Role: '+ emp_role+ ', Position: ' + emp_position
+        })
+        }
+
+        
         
       console.log('User registered');
        res.status(200).json({ message: "User registered successfully" });

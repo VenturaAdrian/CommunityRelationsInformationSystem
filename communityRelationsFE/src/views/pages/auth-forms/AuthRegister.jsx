@@ -30,25 +30,41 @@ export default function AuthRegister() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [empRole, setEmpRole] = useState('');
+  const [currentUserData, setCurrentUserData] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
 
   const [createdby, setCreatedBy] = useState('');
   const [firstname, setFirstName] = useState('');
   const [lastname, setLastName] = useState('');
+  const [currentuserID, setCurrentUserID] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMessage, setDialogMessage] = useState('');
+
+  // Position lists
+  const limitedPositions = ['encoder', 'comrelofficer', 'comrelthree', 'comreldh'];
+  const allPositions = [...limitedPositions, 'super-admin'];
 
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleMouseDownPassword = (event) => event.preventDefault();
 
+  // Get current logged-in user info
   useEffect(() => {
     const empInfo = JSON.parse(localStorage.getItem('user'));
     if (empInfo?.user_name) {
       setCreatedBy(empInfo.user_name);
       setFirstName(empInfo.first_name);
       setLastName(empInfo.last_name);
+      setCurrentUserID(empInfo.id_master);
+      setCurrentUserData(empInfo); // Note: store full object, not just .data
     }
   }, []);
+
+  // If current user is not super-admin, auto-assign empRole as "user"
+  useEffect(() => {
+    if (currentUserData.emp_position !== 'super-admin') {
+      setEmpRole('user');
+    }
+  }, [currentUserData]);
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -97,7 +113,8 @@ export default function AuthRegister() {
         pass_word: password,
         emp_role: empRole,
         first_name: firstname,
-        last_name: lastname
+        last_name: lastname,
+        currentUserId: currentuserID
       });
 
       setDialogMessage("Registered successfully!");
@@ -150,21 +167,27 @@ export default function AuthRegister() {
             />
           </Grid>
 
-          <Grid item xs={12}>
-            <FormControl fullWidth>
-              <InputLabel id="role-label">Role</InputLabel>
-              <Select
-                labelId="role-label"
-                value={empRole}
-                label="Role"
-                onChange={(e) => setEmpRole(e.target.value)}
-              >
-                <MenuItem value="admin">Admin</MenuItem>
-                <MenuItem value="user">User</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+          {/* Only show Role dropdown if current user is super-admin */}
+          {currentUserData.emp_position === 'super-admin' ? (
+            <Grid item xs={12}>
+              <FormControl fullWidth>
+                <InputLabel id="role-label">Role</InputLabel>
+                <Select
+                  labelId="role-label"
+                  value={empRole}
+                  label="Role"
+                  onChange={(e) => setEmpRole(e.target.value)}
+                >
+                  <MenuItem value="admin">Admin</MenuItem>
+                  <MenuItem value="user">User</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          ) : (
+            <input type="hidden" value="user" />
+          )}
 
+          {/* Position dropdown with conditional options */}
           <Grid item xs={12}>
             <FormControl fullWidth>
               <InputLabel id="position-label">Position</InputLabel>
@@ -174,10 +197,11 @@ export default function AuthRegister() {
                 label="Position"
                 onChange={(e) => setEmpPosition(e.target.value)}
               >
-                <MenuItem value="encoder">Encoder</MenuItem>
-                <MenuItem value="comrelofficer">Comrel Officer</MenuItem>
-                <MenuItem value="comrelthree">Comrel III</MenuItem>
-                <MenuItem value="comreldh">Comrel Department Head</MenuItem>
+                {(currentUserData.emp_position === 'super-admin' ? allPositions : limitedPositions).map((position) => (
+                  <MenuItem key={position} value={position}>
+                    {position === 'super-admin' ? 'Others' : position.charAt(0).toUpperCase() + position.slice(1)}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>

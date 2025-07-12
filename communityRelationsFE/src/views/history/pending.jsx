@@ -14,7 +14,8 @@ import {
   FormControl,
   Stack,
   TextField,
-  Chip
+  Chip,
+  Snackbar, Alert
 } from "@mui/material";
 import { useNavigate } from 'react-router-dom';
 
@@ -24,6 +25,11 @@ export default function Pending() {
   const [filterStatus, setFilterStatus] = useState("");
   const [sortOrder, setSortOrder] = useState("newest");
   const [searchRequestId, setSearchRequestId] = useState("");
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -65,8 +71,15 @@ export default function Pending() {
   }, [userPosition]);
 
   const handleReview = (item) => {
-    const params = new URLSearchParams({ id: item.request_id });
-    navigate(`/review?${params.toString()}`);
+    if(userPosition === 'super-admin'){
+      setSnackbarMsg('Unable to access, Change account to Comrel.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+
+    }else{
+      const params = new URLSearchParams({ id: item.request_id });
+      navigate(`/review?${params.toString()}`);
+    }
   };
 
   let filteredData = historyData
@@ -269,6 +282,24 @@ export default function Pending() {
           })}
         </Grid>
       )}
+
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbarMsg}
+        </Alert>
+      </Snackbar>
+
     </Box>
   );
 }

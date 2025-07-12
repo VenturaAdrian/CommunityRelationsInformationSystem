@@ -11,36 +11,68 @@ import {
   HistoryEdu as HistoryEduIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
 
 export default function AdminPage() {
   const navigate = useNavigate();
+  const [currentUserPosition, setCurrentUserPosition] = useState('');
+  const [adminTools, setAdminTools] = useState([]);
 
-  const adminTools = [
-    {
-      label: 'Register User',
-      icon: PersonAddIcon,
-      action: () => navigate('/register'),
-      gradient: 'linear-gradient(135deg, #2F5D0B, #4e7726)', // Dark green blend
-    },
-    {
-      label: 'Edit User',
-      icon: EditIcon,
-      action: () => navigate('/userpanel'),
-      gradient: 'linear-gradient(135deg, #556B2F, #7C9A3C)', // Olive-green tone
-    },
-    {
-      label: 'User Logs',
-      icon: DescriptionIcon,
-      action: () => navigate('/userlogs'),
-      gradient: 'linear-gradient(135deg, #B8860B, #FFD700)', // Bronze to Gold
-    },
-    {
-      label: 'Request Logs',
-      icon: HistoryEduIcon,
-      action: () => navigate('/request-logs'),
-      gradient: 'linear-gradient(135deg, #8B8000, #FFF8DC)', // Soft gold finish
-    },
-  ];
+  useEffect(() => {
+    const empInfo = JSON.parse(localStorage.getItem('user'));
+    const position = empInfo?.emp_position;
+    setCurrentUserPosition(position);
+
+    if (position === 'super-admin') {
+      setAdminTools([
+        {
+          label: 'Register User',
+          icon: PersonAddIcon,
+          action: () => navigate('/register'),
+          gradient: 'linear-gradient(135deg, #2F5D0B, #4e7726)',
+        },
+        {
+          label: 'Edit User',
+          icon: EditIcon,
+          action: () => navigate('/userpanel'),
+          gradient: 'linear-gradient(135deg, #556B2F, #7C9A3C)',
+        },
+        {
+          label: 'User Logs',
+          icon: DescriptionIcon,
+          action: () => navigate('/userlogs'),
+          gradient: 'linear-gradient(135deg, #B8860B, #FFD700)',
+        },
+        {
+          label: 'Request Logs',
+          icon: HistoryEduIcon,
+          action: () => navigate('/request-logs'),
+          gradient: 'linear-gradient(135deg, #8B8000, #FFF8DC)',
+        },
+      ]);
+    } else {
+      setAdminTools([
+        {
+          label: 'Register User',
+          icon: PersonAddIcon,
+          action: () => navigate('/register'),
+          gradient: 'linear-gradient(135deg, #2F5D0B, #4e7726)',
+        },
+        {
+          label: 'User Logs',
+          icon: DescriptionIcon,
+          action: () => navigate('/userlogs'),
+          gradient: 'linear-gradient(135deg, #B8860B, #FFD700)',
+        },
+        {
+          label: 'Request Logs',
+          icon: HistoryEduIcon,
+          action: () => navigate('/request-logs'),
+          gradient: 'linear-gradient(135deg, #8B8000, #FFF8DC)',
+        },
+      ]);
+    }
+  }, [navigate]);
 
   return (
     <Box

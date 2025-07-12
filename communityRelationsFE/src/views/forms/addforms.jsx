@@ -75,9 +75,10 @@ export default function AddForm() {
     //GETTING USER INFORMATIONS
     const empInfo = JSON.parse(localStorage.getItem('user'));
     setUserInfo(empInfo)
-    console.log(userInfo?.emp_position)
+    console.log(userInfo.emp_position)
       if (empInfo?.user_name) {
         setCreatedBy(empInfo.user_name);
+        
       }
   }, []);
 
@@ -97,6 +98,13 @@ export default function AddForm() {
   };
 
   const handleSubmit = async (e) => {
+
+    if(userInfo.emp_position === 'super-admin'){
+      setSnackbarMsg('Unable to access, Change account to Comrel.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+
     e.preventDefault();
 
     const validationErrors = validateFields();

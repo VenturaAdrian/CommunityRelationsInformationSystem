@@ -220,6 +220,7 @@ export default function UserEdit() {
                   <MenuItem value="comrelofficer">Comrel Officer</MenuItem>
                   <MenuItem value="comrelthree">Comrel Three</MenuItem>
                   <MenuItem value="comreldh">Comrel DH</MenuItem>
+                  <MenuItem value="super-admin">Others</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

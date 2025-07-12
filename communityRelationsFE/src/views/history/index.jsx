@@ -13,9 +13,11 @@ import {
   InputLabel,
   FormControl,
   Stack,
-  TextField
+  TextField,
+  Snackbar, Alert
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+
 
 export default function History() {
   const [historyData, setHistoryData] = useState([]);
@@ -23,6 +25,12 @@ export default function History() {
   const [filterStatus, setFilterStatus] = useState("");
   const [sortOrder, setSortOrder] = useState("newest");
   const [searchRequestId, setSearchRequestId] = useState("");
+  const [currentUserData, setCurrentUserData] = useState([]);
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
 
   const navigate = useNavigate();
 
@@ -53,11 +61,21 @@ export default function History() {
 
     const empInfo = JSON.parse(localStorage.getItem("user"));
     setUserPosition(empInfo?.emp_position || "");
+    setCurrentUserData(empInfo)
   }, []);
 
   const handleReview = (item) => {
-    const params = new URLSearchParams({ id: item.request_id });
-    navigate(`/review?${params.toString()}`);
+    if(userPosition === 'super-admin'){
+      setSnackbarMsg('Unable to access, Change account to Comrel.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+
+    }else{
+      const params = new URLSearchParams({ id: item.request_id });
+      navigate(`/review?${params.toString()}`);
+    }
+
+
   };
 
   let filteredData = historyData
@@ -296,6 +314,24 @@ export default function History() {
           })}
         </Grid>
       )}
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbarMsg}
+        </Alert>
+      </Snackbar>
+
+
     </Box>
   );
 }
