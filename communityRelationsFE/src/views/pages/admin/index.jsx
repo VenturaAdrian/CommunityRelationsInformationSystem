@@ -18,11 +18,14 @@ export default function AdminPage() {
   const [currentUserPosition, setCurrentUserPosition] = useState('');
   const [adminTools, setAdminTools] = useState([]);
 
+  //Get User Information from local storage
   useEffect(() => {
     const empInfo = JSON.parse(localStorage.getItem('user'));
     const position = empInfo?.emp_position;
     setCurrentUserPosition(position);
 
+    //Validating Admin Funstion based on position
+    //Tools for Super Admin
     if (position === 'super-admin') {
       setAdminTools([
         {
@@ -51,6 +54,7 @@ export default function AdminPage() {
         },
       ]);
     } else {
+      //Tools For Admin
       setAdminTools([
         {
           label: 'Register User',
@@ -80,7 +84,7 @@ export default function AdminPage() {
         minHeight: '100vh',
         px: 4,
         py: 6,
-        mt: 6,
+        pt: 6,
         background: 'linear-gradient(to bottom right, #1b3d08, #2F5D0B)',
         display: 'flex',
         flexDirection: 'column',

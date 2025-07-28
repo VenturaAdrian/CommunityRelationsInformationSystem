@@ -25,6 +25,7 @@ export default function UserLogs() {
   const [endDate, setEndDate] = useState("");
   const [searchId, setSearchId] = useState("");
 
+  //Fetch all user_logs 
   useEffect(() => {
     const fetchLogs = async () => {
       try {
@@ -39,6 +40,7 @@ export default function UserLogs() {
     fetchLogs();
   }, []);
 
+  //Filter Date
   const handleFilter = () => {
     const from = dayjs(startDate);
     const to = dayjs(endDate);
@@ -53,6 +55,7 @@ export default function UserLogs() {
     setFilteredLogs(result);
   };
 
+  //Filer user using user_id
   const handleSearch = (e) => {
     const value = e.target.value;
     setSearchId(value);
@@ -63,6 +66,7 @@ export default function UserLogs() {
     setFilteredLogs(filtered);
   };
 
+  //Button/input styles
   const inputStyle = {
     "& .MuiOutlinedInput-root": {
       "& fieldset": {
@@ -79,7 +83,7 @@ export default function UserLogs() {
   };
 
   return (
-    <Box sx={{ p: 4, mt: 4 }}>
+    <Box sx={{ p: 4, pt: 4 }}>
       <Paper elevation={6} sx={{ p: 3, borderRadius: 3, mb: 4 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={4}>

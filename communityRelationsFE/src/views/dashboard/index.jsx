@@ -26,11 +26,13 @@ export default function LandingPage() {
   const [snackbarSeverity, setSnackbarSeverity] = useState('error');
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  //Slideshow Images
   const images = [
     image0, image1, image2, image3, image4, image5, image6,
     image7, image8, image9, image10, image11, image12, image13, image14
   ];
 
+  //Get User Information from the local storage
   useEffect(() => {
     const empInfo = JSON.parse(localStorage.getItem('user'));
     if (empInfo) {
@@ -38,6 +40,7 @@ export default function LandingPage() {
     }
   }, []);
 
+  //Slideshow Animation SlideShow
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
@@ -46,6 +49,7 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, [images.length]);
 
+  //Validation for super admin role
   const handlePendingView = () => {
     if (currentUserPosition === 'super-admin') {
       setSnackbarMsg('Unable to access, Change account to Comrel.');

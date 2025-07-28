@@ -37,6 +37,8 @@ export default function History() {
 
   const navigate = useNavigate();
 
+  // Fetch all Active Requests
+  // Sort the data to newest - oldest
   useEffect(() => {
     axios
       .get(`${config.baseApi1}/request/history`)
@@ -66,7 +68,9 @@ export default function History() {
     setCurrentUserData(empInfo);
   }, []);
 
+  //Navigation to Review Page
   const handleReview = (item) => {
+    //Validation for 'super-admin'
     if (userPosition === 'super-admin') {
       setSnackbarMsg('Unable to access, Change account to Comrel.');
       setSnackbarSeverity('error');
@@ -77,6 +81,7 @@ export default function History() {
     }
   };
 
+  //Filter Status/RequestID
   let filteredData = historyData
     .filter((item) =>
       filterStatus
@@ -95,12 +100,14 @@ export default function History() {
       : a.parsedDate - b.parsedDate;
   });
 
+  //Pagenation Function
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
+  //Render Image Display
   const getFirstFilePreview = (docsString = "", requestId) => {
     const files = docsString.split(",").map((f) => f.trim()).filter(Boolean);
     if (!files.length) return null;
@@ -122,7 +129,7 @@ export default function History() {
     <Box
       sx={{
         minHeight: "100vh",
-        mt: 6,
+        pt: 6,
         py: 6,
         px: { xs: 2, md: 6 },
         background: "linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)",
@@ -295,7 +302,7 @@ export default function History() {
               }}
         />
       </Box>
-
+      {/* Alert Component */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={4000}

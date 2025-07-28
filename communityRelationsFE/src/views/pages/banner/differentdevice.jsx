@@ -9,7 +9,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 const DifferentDevice = () => {
   const [loading, setLoading] = useState(false);  
   
-  
+  //Log out User from the Browser
   const handleLogoutFromOtherDevice = () => {
     const empInfo = JSON.parse(localStorage.getItem('user'));
 
@@ -31,12 +31,9 @@ const DifferentDevice = () => {
   return (
     <Box
       sx={{
-        height: '100vh',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        bgcolor: '#f8f9fa',
-        p: 2,
       }}
     >
       <Card sx={{ maxWidth: 500, p: 4, boxShadow: 5 }}>

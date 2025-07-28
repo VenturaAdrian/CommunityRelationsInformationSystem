@@ -18,21 +18,24 @@ export default function UserPanel() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
+  //Fetch All Users
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = () => {
     axios.get(`${config.baseApi}/users/users`)
       .then(res => setUsers(res.data))
       .catch(err => console.error("Error fetching users:", err));
   };
 
+  fetchUsers();
+  }, []);
+
+  //Navigate Edit User Page
   const handleEdit = (id) => {
     const params = new URLSearchParams({ id });
     window.location.replace(`/comrel/usereditpanel?${params.toString()}`);
   };
 
+  //Delete User Function
   const handleDelete = async (id) => {
     const userData = JSON.parse(localStorage.getItem('user'));
     const user_name = userData?.user_name || 'unknown';
@@ -51,6 +54,7 @@ export default function UserPanel() {
     }
   };
 
+  //Filter User by UserId / First and Last name
   const filteredUsers = users.filter(user => {
     const term = searchTerm.toLowerCase();
     return (

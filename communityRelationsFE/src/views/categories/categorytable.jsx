@@ -26,6 +26,7 @@ export default function CategoryTable() {
   const navigate = useNavigate();
   const decodedCategory = decodeURIComponent(category || '');
 
+  //Fetch all Accepted/Stored Request
   useEffect(() => {
     axios
       .get(`${config.baseApi1}/request/history`)
@@ -45,6 +46,7 @@ export default function CategoryTable() {
       });
   }, [decodedCategory]);
 
+  //Navigate to View the Request
   const HandleView = (request_id) => {
     const params = new URLSearchParams({ id: request_id });
     navigate(`/view-request?${params.toString()}`);
@@ -56,7 +58,7 @@ export default function CategoryTable() {
         minHeight: '100vh',
         background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)',
         p: 4,
-        mt: 6,
+        pt: 6,
       }}
     >
       <Typography

@@ -54,8 +54,9 @@ const otherCategories = [
 export default function Category() {
   const navigate = useNavigate();
 
+  //Render cards per categories
   const renderCompactCards = (categories) => (
-    <Grid container spacing={2}>
+    <Grid container spacing={2} >
       {categories.map((category, index) => {
         const IconComponent = categoryIcons[category];
 
@@ -119,11 +120,12 @@ export default function Category() {
     </Grid>
   );
 
+  
   return (
     <Box
       sx={{
         p: 4,
-        mt: 6,
+        pt: 6,
         minHeight: '100vh',
         background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)',
       }}

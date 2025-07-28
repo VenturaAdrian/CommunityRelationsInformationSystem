@@ -35,6 +35,8 @@ export default function Pending() {
 
   const navigate = useNavigate();
 
+  // Fetch all Active Requests
+  // Sort the data to newest - oldest
   useEffect(() => {
     axios
       .get(`${config.baseApi1}/request/history`)
@@ -49,10 +51,12 @@ export default function Pending() {
       })
       .catch(error => console.error("ERROR FETCHING FE:", error));
 
+      //Get User Information from local storage
     const empInfo = JSON.parse(localStorage.getItem("user"));
     setUserPosition(empInfo?.emp_position || "");
   }, []);
 
+  //Filter data base on their position
   useEffect(() => {
     if (userPosition === 'encoder') setFilterStatus('reviewed');
     else if (userPosition === 'comrelofficer') setFilterStatus('request');
@@ -60,7 +64,9 @@ export default function Pending() {
     else if (userPosition === 'comreldh') setFilterStatus('Pending review for Comrel DH');
   }, [userPosition]);
 
+  //Navigate to Pending View
   const handleReview = (item) => {
+    //Validation for 'super-admin'
     if (userPosition === 'super-admin') {
       setSnackbarMsg('Unable to access, Change account to Comrel.');
       setSnackbarSeverity('error');
@@ -80,6 +86,7 @@ export default function Pending() {
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedData = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  //Render display image
   const getFirstFilePreview = (docsString = "", requestId) => {
     const files = docsString.split(",").map(f => f.trim()).filter(Boolean);
     if (!files.length) return null;
@@ -93,7 +100,7 @@ export default function Pending() {
   };
 
   return (
-    <Box sx={{ pt: 8, pb: 6, px: { xs: 2, md: 6 }, background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)' }}>
+    <Box sx={{ minHeight: "100vh",pt: 6, py: 6, px: { xs: 2, md: 6 }, background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)' }}>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={4} alignItems="center">
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel sx={{ color: "#1b4332" }}>Sort By Date</InputLabel>
@@ -239,6 +246,7 @@ export default function Pending() {
         </>
       )}
 
+      {/* Alert Component */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={4000}

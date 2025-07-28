@@ -22,17 +22,19 @@ import {
 
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 
-
+//Barangay Options
 const barangayOptions = [
   'Balili', 'Bedbed', 'Bulalacao', 'Cabiten', 'Colalo', 'Guinaoang',
   'Paco', 'Palasaan', 'Poblacion', 'Sapid', 'Tabio', 'Taneg'
 ];
 
+//Activities Option
 const activityOptions = [
   'Medical Mission', 'Reach Out', 'Feeding Program',
   'Rescue', 'Rehabilitation', 'Ayuda'
 ];
 
+//Category Options
 const categoryOptions = [
   'Human Resource Development & Institutional Building (HRDIB)',
   'Enterprise Development & Networking',
@@ -68,8 +70,9 @@ export default function EditForm() {
   const [position, setPosition] = useState('');
 
 
-  //Formdata = 1st Data
-  //OriginalData = 2nd Data
+  //Formdata = Raw Data
+  //OriginalData = From DB Data
+  //Validate any changes commited
   useEffect(() => {
     if (requestID) {
       axios.get(`${config.baseApi1}/request/editform`, {
@@ -99,6 +102,7 @@ export default function EditForm() {
         setStatus(data.request_status);
       });
     }
+
     //Get User Informations
     const empInfo = JSON.parse(localStorage.getItem("user"));
     if (empInfo?.user_name) {
@@ -179,12 +183,14 @@ export default function EditForm() {
     return changes.join("; ");
   };
 
+  //Save Edited Request
  const handleSave = () => {
   const validationErrors = validateFields();
   setErrors(validationErrors);
   
   if (Object.keys(validationErrors).length > 0) return;
 
+  //Validation Position
   let updatedStatus = status;
   if (position === 'encoder' && status === 'reviewed') {
     updatedStatus = 'request';
@@ -238,6 +244,7 @@ export default function EditForm() {
   });
 };
 
+  // Validate if No data
   if (!formData) return <Typography>Loading...</Typography>;
 
   return (
@@ -465,7 +472,8 @@ export default function EditForm() {
           </Grid>
         </Grid>
       </Paper>
-
+      
+      {/* Alert/Loading Components */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={4000}

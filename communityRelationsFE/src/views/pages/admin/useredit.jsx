@@ -39,11 +39,13 @@ export default function UserEdit() {
     is_active: true
   });
 
+  //Fetch User Information from local Storage
   useEffect(() => {
     const empInfo = JSON.parse(localStorage.getItem("user"));
     setUsername(empInfo?.user_name || "");
   }, []);
 
+  //Get User Data from SQL
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -60,6 +62,7 @@ export default function UserEdit() {
     fetchUser();
   }, [userId]);
 
+  //Checker if changes were made from the fields
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -69,6 +72,7 @@ export default function UserEdit() {
     }));
   };
 
+  //Change Logs function
   const getChangesLog = () => {
     const changes = [];
 
@@ -83,6 +87,7 @@ export default function UserEdit() {
     return changes.join(", ");
   };
 
+  //Submit Function
   const handleSubmit = async (e) => {
     e.preventDefault();
 

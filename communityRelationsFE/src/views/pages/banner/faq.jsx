@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+//Question & Answers
 const faqData = [
   {
     question: "I forgot my password, what should I do?",

@@ -23,6 +23,7 @@ export default function ViewRequestPage() {
   const [data, setData] = useState(null);
   const [allFiles, setAllFiles] = useState([]);
 
+  //Fetch the Request 
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -43,12 +44,14 @@ export default function ViewRequestPage() {
     fetchData();
   }, [requestId]);
 
+  //Get User data from localStorage
   useEffect(() => {
     const empInfo = JSON.parse(localStorage.getItem('user'));
     setUserData(empInfo.data)
     console.log(userData)
   },[])
 
+  //Download Function
   const handleDownloadAll = async () => {
     try {
       const response = await axios.post(
@@ -71,6 +74,7 @@ export default function ViewRequestPage() {
     }
   };
 
+  //View Component for Request Card Component
   const renderPostContent = () => {
     if (!data) return null;
 

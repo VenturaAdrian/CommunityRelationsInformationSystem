@@ -23,6 +23,7 @@ export default function RequestLogs() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+ //Fetch all request logs
   useEffect(() => {
     axios
       .get(`${config.baseApi1}/request/request-logs`)
@@ -35,6 +36,7 @@ export default function RequestLogs() {
       });
   }, []);
 
+  // RequestId/Date Filter
   useEffect(() => {
     let filtered = data;
 
@@ -61,12 +63,14 @@ export default function RequestLogs() {
     setFilteredData(filtered);
   }, [searchId, startDate, endDate, data]);
 
+  //Reset Filter Button
   const handleResetFilters = () => {
     setSearchId("");
     setStartDate("");
     setEndDate("");
   };
 
+  //Buttons and Input Styles
   const inputStyles = {
     '& .MuiOutlinedInput-root': {
       '& fieldset': {

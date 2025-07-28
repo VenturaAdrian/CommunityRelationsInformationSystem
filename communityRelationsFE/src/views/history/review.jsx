@@ -48,6 +48,7 @@ export default function Review() {
   const navigate = useNavigate(); 
   const commentRef = useRef(null);
 
+  //Get User Information from local storage
   useEffect(() => {
     const empInfo = JSON.parse(localStorage.getItem('user'));
     setUserID(empInfo?.id_master);
@@ -58,6 +59,7 @@ export default function Review() {
     setRole(empInfo?.role || '');
   }, []);
 
+  //Fetch  Request/Comments from the requestID
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -84,7 +86,7 @@ export default function Review() {
   }, [requestID]);
 
 
-
+//Edit/Delete Validation based on their position
   const ShowEditDelete = () => {
     if(role === 'admin'||( position === 'encoder' && status === 'reviewed')){
       return true;
@@ -97,8 +99,8 @@ export default function Review() {
     }  
   }
 
-
-  const canShowEditDelete = () => {
+//Accept/Decline validation based on the Status and Position
+  const canShowDeclineAccept= () => {
     if (!formData) return false;
     
     if (status === 'reviewed' && position === 'encoder') return false;
@@ -159,7 +161,7 @@ export default function Review() {
     return false;
   };
 
-
+//Comment Submit Function
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!comment.trim()) return;
@@ -209,13 +211,10 @@ export default function Review() {
     }
   };
 
-  const handleDecline = () => {
-    setShowComments(true);
-    setTimeout(() => commentRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-  };
-
+  //Show Delete Component
   const handleDelete = () => setShowDeleteConfirm(true);
 
+  //Delete Function
   const confirmDelete = async () => {
     try {
       await axios.get(`${config.baseApi1}/request/delete-request`, {
@@ -237,6 +236,12 @@ export default function Review() {
     }
   };
 
+  //Decline Function
+  const handleDecline = () => {
+    setShowComments(true);
+    setTimeout(() => commentRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+  };
+  //Accept Function
   const handleAccept = async () => {
     try {
       const res = await axios.post(`${config.baseApi1}/request/accept`, {
@@ -275,7 +280,7 @@ export default function Review() {
     }
   };
 
-
+  //Navigate Edit Page
   const handleEdit = () => {
     const params = new URLSearchParams({ id: requestID });
     navigate(`/edit?${params.toString()}`)
@@ -286,7 +291,7 @@ export default function Review() {
   sx={{
     minHeight: '100vh',
     p: 4,
-    mt: 4,
+    pt: 4,
     background: 'linear-gradient(to bottom, #ffdc73, #bf9b30)',
     borderRadius: 3,
     boxShadow: 4,
@@ -491,7 +496,7 @@ export default function Review() {
   )}
 
   {/* Accept/Decline Buttons */}
-  {canShowEditDelete() && (
+  {canShowDeclineAccept() && (
     <Stack mt={5} direction="row" spacing={2} justifyContent="center">
       <Button variant="contained" color="error" onClick={handleDecline}>
         Decline

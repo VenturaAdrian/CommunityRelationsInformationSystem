@@ -71,8 +71,9 @@ export default function AddForm() {
 
   const fileInputRef = useRef(null);
 
+  //Get User Information from local storage
   useEffect(() => {
-    //GETTING USER INFORMATIONS
+    
     const empInfo = JSON.parse(localStorage.getItem('user'));
     setUserInfo(empInfo)
     console.log(userInfo.emp_position)
@@ -97,8 +98,9 @@ export default function AddForm() {
     return newErrors;
   };
 
+  //Submit Request Form Function
   const handleSubmit = async (e) => {
-
+    //Valication for super-admin role
     if(userInfo.emp_position === 'super-admin'){
       setSnackbarMsg('Unable to access, Change account to Comrel.');
       setSnackbarSeverity('error');
@@ -163,12 +165,13 @@ export default function AddForm() {
     }
   };
 
+  //Error Component
   const clearError = (field) => {
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
   return (
-    <Box sx={{ mt: 4, p: 2, background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)', minHeight: '100vh' }}>
+    <Box sx={{ pt: 4, p: 2, background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)', minHeight: '100vh' }}>
       <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: 'auto', mt: 2, mb: 2 }}>
         <Typography variant="h5" mb={2} textAlign="center">Add Community Request Form</Typography>
 
@@ -405,6 +408,7 @@ export default function AddForm() {
         </Box>
       </Paper>
 
+      {/* Error/Loading components */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={4000}
