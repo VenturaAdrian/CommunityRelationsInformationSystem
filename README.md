@@ -8,8 +8,8 @@
     </td>
   </tr>
 </table>
-
-<img src="./fc1.jpg" alt="Logo" width="100">
+<h3>FLOWCHART</h3>
+<img src="./fc1.jpg" alt="Logo" width="100%">
 
 Node Version : v24.2.0 <br>
 SQL Version: 20.2.30.0
