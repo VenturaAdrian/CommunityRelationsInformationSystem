@@ -1,7 +1,7 @@
 <table border="0">
   <tr>
     <td>
-      <img src="assets/logo1.png" alt="Logo" width="100">
+      <img src="communityRelationsFE/src/assets/images/logo1.png" alt="Logo" width="100">
     </td>
     <td>
       <h1>Community Relations Information System</h1>
