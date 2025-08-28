@@ -1,3 +1,17 @@
+const categoryOptions = [
+  'Human Resource Development & Institutional Building (HRDIB)',
+  'Enterprise Development & Networking',
+  'Assistance to Infrastructure Development & Support Services',
+  'Access to Education & Educational Support Programs',
+  'Access to Health Services - Health Facilities & Health Professionals',
+  'Protection & Respect of Socio-Cultural Values',
+  'Information - Education & Communication (IEC)',
+  'Development of Mining & GeoSciences & Technology',
+  'Concessionaires',
+  'Company Facilities',
+  'Corporate Social Responsibility -Donations'
+]
+
 import axios from "axios";
 import config from "config";
 import { useEffect, useState } from "react";
@@ -27,7 +41,7 @@ export default function History() {
   const [sortOrder, setSortOrder] = useState("newest");
   const [searchRequestId, setSearchRequestId] = useState("");
   const [currentUserData, setCurrentUserData] = useState([]);
-
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
@@ -46,7 +60,7 @@ export default function History() {
         const activeRequests = response.data
           .filter((item) => item.is_active === true)
           .map((item) => {
-            const cleaned = item.created_at
+            const cleaned = item.date_Time
               ?.replace(/\s+/g, " ")
               .replace(/(\d)(AM|PM)/i, "$1 $2")
               .trim();
@@ -92,7 +106,8 @@ export default function History() {
       searchRequestId
         ? item.request_id.toString().includes(searchRequestId)
         : true
-    );
+    )
+    .filter(item => !selectedCategory || item.comm_Category === selectedCategory)
 
   filteredData.sort((a, b) => {
     return sortOrder === "newest"
@@ -148,6 +163,7 @@ export default function History() {
           onChange={(e) => setSearchRequestId(e.target.value)}
           sx={{
             minWidth: 200,
+            color: "#1b4332",
             input: { color: "#1b4332" },
             label: { color: "#1b4332" },
             "& .MuiOutlinedInput-root": {
@@ -204,6 +220,26 @@ export default function History() {
             <MenuItem value="oldest">Oldest First</MenuItem>
           </Select>
         </FormControl>
+
+        <FormControl sx={{ minWidth: 250 }}>
+          <InputLabel sx={{ color: "#1b4332" }}>Filter by Category</InputLabel>
+          <Select
+            value={selectedCategory}
+            label='Filter by Category'
+            onChange={(e) => setSelectedCategory(e.target.value)}
+
+            sx={{
+              color: '#1b4332',
+              '.MuiOutlinedInput-notchedOutline': { borderColor: '#274e13', borderWidth: '2px' },
+              '& .MuiSvgIcon-root': { color: '#1b4332' }
+            }}
+          >
+            <MenuItem value="">All Categories</MenuItem>
+            {categoryOptions.map(cat => (
+              <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Stack>
 
       {paginatedData.length === 0 ? (
@@ -216,6 +252,15 @@ export default function History() {
         <Grid container spacing={2}>
           {paginatedData.map((item) => {
             const preview = getFirstFilePreview(item.comm_Docs, item.request_id);
+
+            const author = item.updated_by && item.updated_by.trim() !== ""
+              ? item.updated_by
+              : item.created_by || "";
+
+            const formattedAuthor = author
+              ? author.charAt(0).toUpperCase() + author.slice(1).toLowerCase()
+              : "Unknown";
+
             return (
               <Grid item xs={12} md={6} key={item.request_id} sx={{ display: "flex" }}>
                 <Card
@@ -265,13 +310,12 @@ export default function History() {
                       <Typography variant="body2" color="text.secondary">No File</Typography>
                     )}
                   </Box>
-
                   <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                     <Box>
                       <Typography><strong>Request ID:</strong> {item.request_id}</Typography>
+                      <Typography sx={{ mt: 1 }}><strong>Author</strong> {formattedAuthor}</Typography>
                       <Typography><strong>Status:</strong> {item.request_status}</Typography>
                       <Typography><strong>Community Area/Barangay:</strong> {item.comm_Area}</Typography>
-                      <Typography><strong>Community Activity:</strong> {item.comm_Act}</Typography>
                       <Typography><strong>Category:</strong> {item.comm_Category}</Typography>
                       <Typography><strong>Date/Time:</strong> {item.parsedDate ? item.parsedDate.toLocaleString() : "Invalid Date"}</Typography>
                     </Box>
@@ -295,11 +339,11 @@ export default function History() {
           onChange={(e, value) => setCurrentPage(value)}
           color="primary"
           sx={{
-                '& .MuiPaginationItem-root': {
-                  color: '#000000ff',
-                  borderColor: '#d8b400ff'
-                }
-              }}
+            '& .MuiPaginationItem-root': {
+              color: '#000000ff',
+              borderColor: '#d8b400ff'
+            }
+          }}
         />
       </Box>
       {/* Alert Component */}

@@ -1,3 +1,17 @@
+const categoryOptions = [
+  'Human Resource Development & Institutional Building (HRDIB)',
+  'Enterprise Development & Networking',
+  'Assistance to Infrastructure Development & Support Services',
+  'Access to Education & Educational Support Programs',
+  'Access to Health Services - Health Facilities & Health Professionals',
+  'Protection & Respect of Socio-Cultural Values',
+  'Information - Education & Communication (IEC)',
+  'Development of Mining & GeoSciences & Technology',
+  'Concessionaires',
+  'Company Facilities',
+  'Corporate Social Responsibility -Donations'
+]
+
 import axios from "axios";
 import config from "config";
 import { useEffect, useState } from "react";
@@ -27,16 +41,18 @@ export default function Pending() {
   const [filterStatus, setFilterStatus] = useState("");
   const [sortOrder, setSortOrder] = useState("newest");
   const [searchRequestId, setSearchRequestId] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
+  const [filteredData, setFiltereddata] = useState([]);
+
   const navigate = useNavigate();
 
   // Fetch all Active Requests
-  // Sort the data to newest - oldest
   useEffect(() => {
     axios
       .get(`${config.baseApi1}/request/history`)
@@ -45,13 +61,13 @@ export default function Pending() {
           .filter(item => item.is_active === true)
           .map(item => ({
             ...item,
-            parsedDate: new Date(item.created_at?.replace(/\s+/g, " ").replace(/(\d)(AM|PM)/i, "$1 $2"))
+            parsedDate: new Date(item.date_Time?.replace(/\s+/g, " ").replace(/(\d)(AM|PM)/i, "$1 $2"))
           }));
         setHistoryData(activeRequests);
       })
       .catch(error => console.error("ERROR FETCHING FE:", error));
 
-      //Get User Information from local storage
+    //Get User Information from local storage
     const empInfo = JSON.parse(localStorage.getItem("user"));
     setUserPosition(empInfo?.emp_position || "");
   }, []);
@@ -61,12 +77,11 @@ export default function Pending() {
     if (userPosition === 'encoder') setFilterStatus('reviewed');
     else if (userPosition === 'comrelofficer') setFilterStatus('request');
     else if (userPosition === 'comrelthree') setFilterStatus('Pending review for ComrelIII');
-    else if (userPosition === 'comreldh') setFilterStatus('Pending review for Comrel DH');
+    else if (userPosition === 'comreldh') setFilterStatus('accepted');
   }, [userPosition]);
 
   //Navigate to Pending View
   const handleReview = (item) => {
-    //Validation for 'super-admin'
     if (userPosition === 'super-admin') {
       setSnackbarMsg('Unable to access, Change account to Comrel.');
       setSnackbarSeverity('error');
@@ -76,15 +91,29 @@ export default function Pending() {
     }
   };
 
-  // Filter, Sort, Search
-  const filtered = historyData
-    .filter(item => !filterStatus || item.request_status.toLowerCase() === filterStatus.toLowerCase())
-    .filter(item => !searchRequestId || item.request_id.toString().includes(searchRequestId))
-    .sort((a, b) => sortOrder === 'newest' ? b.parsedDate - a.parsedDate : a.parsedDate - b.parsedDate);
+  // ✅ Filter, Sort, Search including Category
+  useEffect(() => {
+    let filtered;
+
+    if (userPosition === 'comreldh') {
+      filtered = historyData
+        .filter(item => item.request_status === 'accepted' && item.comreldh === false);
+    } else {
+      filtered = historyData
+        .filter(item => !filterStatus || item.request_status.toLowerCase() === filterStatus.toLowerCase());
+    }
+
+    filtered = filtered
+      .filter(item => !searchRequestId || item.request_id.toString().includes(searchRequestId))
+      .filter(item => !selectedCategory || item.comm_Category === selectedCategory) // ✅ category filter
+      .sort((a, b) => sortOrder === 'newest' ? b.parsedDate - a.parsedDate : a.parsedDate - b.parsedDate);
+
+    setFiltereddata(filtered);
+  }, [userPosition, filterStatus, searchRequestId, sortOrder, historyData, selectedCategory]);
 
   // Pagination
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginatedData = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   //Render display image
   const getFirstFilePreview = (docsString = "", requestId) => {
@@ -100,8 +129,10 @@ export default function Pending() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh",pt: 6, py: 6, px: { xs: 2, md: 6 }, background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)' }}>
+    <Box sx={{ minHeight: "100vh", pt: 6, py: 6, px: { xs: 2, md: 6 }, background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)' }}>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mb={4} alignItems="center">
+
+        {/* Sort By Date */}
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel sx={{ color: "#1b4332" }}>Sort By Date</InputLabel>
           <Select
@@ -110,13 +141,8 @@ export default function Pending() {
             onChange={(e) => setSortOrder(e.target.value)}
             sx={{
               color: '#1b4332',
-              '.MuiOutlinedInput-notchedOutline': {
-                borderColor: '#274e13',
-                borderWidth: '2px'
-              },
-              '& .MuiSvgIcon-root': {
-                color: '#1b4332'
-              }
+              '.MuiOutlinedInput-notchedOutline': { borderColor: '#274e13', borderWidth: '2px' },
+              '& .MuiSvgIcon-root': { color: '#1b4332' }
             }}
           >
             <MenuItem value="newest">Newest First</MenuItem>
@@ -124,9 +150,9 @@ export default function Pending() {
           </Select>
         </FormControl>
 
+        {/* Search Request ID */}
         <TextField
           label="Search Request ID"
-          variant="outlined"
           value={searchRequestId}
           onChange={(e) => setSearchRequestId(e.target.value)}
           sx={{
@@ -141,19 +167,35 @@ export default function Pending() {
           }}
         />
 
+        {/* ✅ Category Filter */}
+        <FormControl sx={{ minWidth: 250 }}>
+          <InputLabel sx={{ color: "#1b4332" }}>Filter by Category</InputLabel>
+          <Select
+            value={selectedCategory}
+            label='Filter by Category'
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            sx={{
+              color: '#1b4332',
+              '.MuiOutlinedInput-notchedOutline': { borderColor: '#274e13', borderWidth: '2px' },
+              '& .MuiSvgIcon-root': { color: '#1b4332' }
+            }}
+          >
+            <MenuItem value="">All Categories</MenuItem>
+            {categoryOptions.map(cat => (
+              <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
         {filterStatus && (
           <Chip
             label={`Filtering: ${filterStatus}`}
-            sx={{
-              bgcolor: "#274e13",
-              color: "white",
-              fontWeight: "bold"
-            }}
+            sx={{ bgcolor: "#274e13", color: "white", fontWeight: "bold" }}
           />
         )}
       </Stack>
 
-      {filtered.length === 0 ? (
+      {filteredData.length === 0 ? (
         <Box textAlign="center" mt={6}>
           <Typography variant="h6" color="white">No {filterStatus} data found</Typography>
         </Box>
@@ -162,6 +204,15 @@ export default function Pending() {
           <Grid container spacing={3}>
             {paginatedData.map(item => {
               const preview = getFirstFilePreview(item.comm_Docs, item.request_id);
+
+              const author = item.updated_by && item.updated_by.trim() !== ""
+                ? item.updated_by
+                : item.created_by || "";
+
+              const formattedAuthor = author
+                ? author.charAt(0).toUpperCase() + author.slice(1).toLowerCase()
+                : "Unknown";
+
               return (
                 <Grid item xs={12} md={6} lg={4} key={item.request_id}>
                   <Card
@@ -204,9 +255,9 @@ export default function Pending() {
 
                     <CardContent sx={{ flex: 1, p: 2 }}>
                       <Typography variant="subtitle2" color="#274e13">Request ID: {item.request_id}</Typography>
-                      <Typography variant="h6" sx={{ color: "#1b4332" }} gutterBottom>{item.comm_Act}</Typography>
-                      <Typography variant="body2"><strong>Status:</strong> {item.request_status}</Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}><strong>Author:</strong> {formattedAuthor}</Typography>                      <Typography variant="body2"><strong>Status:</strong> {item.request_status}</Typography>
                       <Typography variant="body2"><strong>Community Area:</strong> {item.comm_Area}</Typography>
+                      <Typography variant="body2"><strong>Category:</strong> {item.comm_Category}</Typography>
                       <Typography variant="body2" sx={{ mt: 1 }}>
                         <strong>Date:</strong>{" "}
                         {item.parsedDate ? item.parsedDate.toLocaleString() : "Invalid Date"}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Avatar,
@@ -9,10 +9,20 @@ import {
   Divider,
   Button,
   Grid,
-  Tooltip
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  IconButton
 } from '@mui/material';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import DownloadIcon from '@mui/icons-material/Download';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import CloseIcon from '@mui/icons-material/Close';
+
 import axios from 'axios';
 import config from 'config';
 
@@ -22,6 +32,44 @@ export default function ViewRequestPage() {
   const [userData, setUserData] = useState([]);
   const [data, setData] = useState(null);
   const [allFiles, setAllFiles] = useState([]);
+
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+
+  const [declineOpen, setDeclineOpen] = useState(false);
+  const [declineComment, setDeclineComment] = useState("");
+
+  const [access, setAccess] = useState(false);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  // Open decline dialog
+  const handleDeclineClick = () => {
+    setDeclineOpen(true);
+    handleMenuClose();
+  };
+
+  const handleDeclineClose = () => {
+    setDeclineOpen(false);
+    setDeclineComment("");
+  };
+
+  useEffect(() => {
+    const empInfo = JSON.parse(localStorage.getItem('user'));
+    if (empInfo.emp_position === ('encoder' || 'comrelofficer')) {
+      setAccess(false);
+    } else {
+      setAccess(true)
+    }
+  }, [])
+
+
 
   //Fetch the Request 
   useEffect(() => {
@@ -49,16 +97,53 @@ export default function ViewRequestPage() {
     const empInfo = JSON.parse(localStorage.getItem('user'));
     setUserData(empInfo.data)
     console.log(userData)
-  },[])
+  }, [])
+
+  const handleDeclineSubmit = async (e) => {
+    e.preventDefault();
+    if (!declineComment.trim()) return;
+
+    try {
+      const empInfo = JSON.parse(localStorage.getItem('user'));
+      // Example: send decline with comment
+      await axios.post(`${config.baseApi1}/request/comment`, {
+        request_id: requestId,
+        comment: declineComment,
+        created_by: empInfo.user_name
+      });
+
+      await axios.post(`${config.baseApi1}/request/comment-decline`, {
+        request_id: requestId,
+        emp_position: empInfo.emp_position,
+        id_master: empInfo.id_master,
+        currentUser: empInfo.user_name
+      })
+
+      await axios.post(`${config.baseApi1}/request/email-post-decline`, {
+        id_master: empInfo.id_master,
+        comm_Area: data.comm_Area,
+        comm_Act: data.comm_Act,
+        comm_Desc: data.comm_Desc,
+        request_id: requestId,
+        comment: declineComment,
+        date_time: data.date_Time
+      })
+      console.log("Declined with comment:", declineComment);
+      handleDeclineClose();
+    } catch (err) {
+      console.error("Error submitting decline:", err);
+    }
+  };
 
   //Download Function
   const handleDownloadAll = async () => {
     try {
       const response = await axios.post(
         `${config.baseApi1}/request/download-all`,
-        { files: allFiles,
+        {
+          files: allFiles,
 
-         },
+        },
         { responseType: 'blob' }
       );
 
@@ -73,6 +158,9 @@ export default function ViewRequestPage() {
       console.error('Error downloading all files:', error);
     }
   };
+
+
+
 
   //View Component for Request Card Component
   const renderPostContent = () => {
@@ -116,13 +204,63 @@ export default function ViewRequestPage() {
                 </Typography>
               </Box>
             </Box>
-            {allFiles.length > 0 && (
-              <Tooltip title="Download All Files">
-                <Button onClick={handleDownloadAll} sx={{ minWidth: 0, padding: 1 }}>
-                  <DownloadIcon />
+            <Button
+              onClick={handleMenuClick}
+              sx={{ minWidth: 0, padding: 1 }}
+            >
+              <MoreHorizIcon />
+            </Button>
+
+            <Menu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleMenuClose}
+            >
+              <MenuItem onClick={() => { handleDownloadAll(); handleMenuClose(); }}>
+                <DownloadIcon fontSize="small" style={{ marginRight: 8 }} />
+                Download
+              </MenuItem>
+              {access && (
+                <MenuItem onClick={() => { handleDeclineClick(); handleMenuClose(); }}>
+                  <CloseIcon fontSize="small" style={{ marginRight: 8 }} />
+                  Decline
+                </MenuItem>
+              )}
+            </Menu>
+
+            {/* Decline Dialog */}
+            <Dialog open={declineOpen} onClose={handleDeclineClose} fullWidth maxWidth="sm">
+              <DialogTitle>
+                Decline Request
+                <IconButton
+                  onClick={handleDeclineClose}
+                  sx={{ position: 'absolute', right: 8, top: 8 }}
+                >
+                  <CloseIcon />
+                </IconButton>
+              </DialogTitle>
+              <DialogContent>
+                <TextField
+                  multiline
+                  rows={4}
+                  fullWidth
+                  placeholder="Write a reason for declining..."
+                  value={declineComment}
+                  onChange={(e) => setDeclineComment(e.target.value)}
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleDeclineClose}>Cancel</Button>
+                <Button
+                  onClick={handleDeclineSubmit}
+                  disabled={!declineComment.trim()}
+                  variant="contained"
+                  color="error"
+                >
+                  Submit Decline
                 </Button>
-              </Tooltip>
-            )}
+              </DialogActions>
+            </Dialog>
           </Box>
 
           <Typography sx={{ mb: 2, fontSize: { xs: 14, sm: 16 } }}>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import config from 'config';
 import {
   Box,
   Button,
@@ -15,12 +16,12 @@ import {
   Autocomplete,
   Snackbar,
   Alert,
-  Backdrop, 
+  Backdrop,
   CircularProgress
 } from '@mui/material';
 
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
-import config from 'config';
+
 
 const barangayOptions = [
   'Balili', 'Bedbed', 'Bulalacao', 'Cabiten', 'Colalo', 'Guinaoang',
@@ -59,6 +60,7 @@ export default function AddForm() {
   const [commBenef, setCommBenef] = useState([]);
   const [commDesc, setCommDesc] = useState('');
   const [commCategory, setCommCategory] = useState('');
+
   const [createdby, setCreatedBy] = useState('');
   const [errors, setErrors] = useState({});
   const [userInfo, setUserInfo] = useState([]);
@@ -73,15 +75,14 @@ export default function AddForm() {
 
   //Get User Information from local storage
   useEffect(() => {
-    
     const empInfo = JSON.parse(localStorage.getItem('user'));
     setUserInfo(empInfo)
-    console.log(userInfo.emp_position)
-      if (empInfo?.user_name) {
-        setCreatedBy(empInfo.user_name);
-        
-      }
+    if (empInfo?.user_name) {
+      setCreatedBy(empInfo.user_name);
+    }
   }, []);
+
+
 
   //VALIDATE ALL FIELDS
   const validateFields = () => {
@@ -101,7 +102,7 @@ export default function AddForm() {
   //Submit Request Form Function
   const handleSubmit = async (e) => {
     //Valication for super-admin role
-    if(userInfo.emp_position === 'super-admin'){
+    if (userInfo.emp_position === 'super-admin') {
       setSnackbarMsg('Unable to access, Change account to Comrel.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -135,12 +136,12 @@ export default function AddForm() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      await axios.post(`${config.baseApi1}/request/email-post-add`,{
+      await axios.post(`${config.baseApi1}/request/email-post-add`, {
 
-          id_master: userInfo.id_master,
-          comm_Area: commArea,
-          comm_Act : commAct,
-          comm_Desc: commDesc
+        id_master: userInfo.id_master,
+        comm_Area: commArea,
+        comm_Act: commAct,
+        comm_Desc: commDesc
       });
       setSnackbarMsg('Form submitted successfully!');
       setSnackbarSeverity('success');
@@ -160,7 +161,7 @@ export default function AddForm() {
       setSnackbarMsg('Failed to submit.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
-    } finally{
+    } finally {
       setLoading(false);
     }
   };

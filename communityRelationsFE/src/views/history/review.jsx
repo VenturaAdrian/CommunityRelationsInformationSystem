@@ -135,7 +135,7 @@ export default function Review() {
       ) {
         return false;
       }
-      else if (comrelthree === true && comrelofficer === true && comreldh === false ||
+      else if (comrelthree === true && comrelofficer === true && comreldh === true ||
         (comrelofficer === true && comrelthree === false && comreldh === false)
       ) {
         return true
@@ -335,6 +335,14 @@ export default function Review() {
                 <Grid container spacing={2}>
                   {[
                     ['Status', formData.request_status],
+                    ['Author', formData.created_by
+                      ? formData.created_by.charAt(0).toUpperCase() + formData.created_by.slice(1).toLowerCase()
+                      : 'none'
+                    ],
+                    ['Updated By', formData.updated_by
+                      ? formData.updated_by.charAt(0).toUpperCase() + formData.updated_by.slice(1).toLowerCase()
+                      : 'none'
+                    ],
                     ['Community', formData.comm_Area],
                     ['Activity', formData.comm_Act],
                     ['Category', formData.comm_Category],

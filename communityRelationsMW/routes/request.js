@@ -13,109 +13,109 @@ require('dotenv').config();
 const archiver = require('archiver');
 
 
-    var knex = require("knex")({
-        client: 'mssql',
-        connection: {
-        user: process.env.USER,
-        password: process.env.PASSWORD,
-        server: process.env.SERVER,
-        database: process.env.DATABASE,
-        port: parseInt(process.env.APP_SERVER_PORT),
-        options: {
-            enableArithAbort: true,
-        
-        }
-        },
-    });
+var knex = require("knex")({
+  client: 'mssql',
+  connection: {
+    user: process.env.USER,
+    password: process.env.PASSWORD,
+    server: process.env.SERVER,
+    database: process.env.DATABASE,
+    port: parseInt(process.env.APP_SERVER_PORT),
+    options: {
+      enableArithAbort: true,
 
-    router.post('/register', async function (req, res, next){
-  
+    }
+  },
+});
+
+router.post('/register', async function (req, res, next) {
+
   const currentTimestamp = new Date(); //Current time - YYYY/MM/DD - 00/HH/MM/SSS
 
-    console.log(req)
-      const {
-        emp_firstname,
-        emp_lastname,
-        user_name,
-        emp_email,
-        emp_position,
-        pass_word,
-        emp_role,
-        updated_by,
-        first_name,
-        last_name,
-        currentUserId
-      } = req.body;
+  console.log(req)
+  const {
+    emp_firstname,
+    emp_lastname,
+    user_name,
+    emp_email,
+    emp_position,
+    pass_word,
+    emp_role,
+    updated_by,
+    first_name,
+    last_name,
+    currentUserId
+  } = req.body;
 
-    const currentUserData = await knex('users_master').where({id_master: currentUserId}).first();
-    console.log('CURRENT USER DATA:',currentUserData)
+  const currentUserData = await knex('users_master').where({ id_master: currentUserId }).first();
+  console.log('CURRENT USER DATA:', currentUserData)
 
-    try{
-      const [user] = await knex('users_master'). insert({
-          emp_firstname: emp_firstname,
-          emp_lastname: emp_lastname,
-          emp_email: emp_email,
-          user_name: user_name,
-          emp_position: emp_position,
-          pass_word:pass_word,
-          emp_role: emp_role,
-          created_by: updated_by,
-          created_at: currentTimestamp,
-          updated_by: '',
-          updated_at: currentTimestamp, 
-          is_active: 0
-          
-        }).returning('id_master')
+  try {
+    const [user] = await knex('users_master').insert({
+      emp_firstname: emp_firstname,
+      emp_lastname: emp_lastname,
+      emp_email: emp_email,
+      user_name: user_name,
+      emp_position: emp_position,
+      pass_word: pass_word,
+      emp_role: emp_role,
+      created_by: updated_by,
+      created_at: currentTimestamp,
+      updated_by: '',
+      updated_at: currentTimestamp,
+      is_active: 0
 
-        const id_master = user.id_master || user;
+    }).returning('id_master')
 
-        const currentUserPosition = currentUserData.emp_position
+    const id_master = user.id_master || user;
 
-        if(currentUserPosition === 'super-admin'){
-          await knex('users_logs').insert({
-          user_id: id_master,
-          emp_firstname: emp_firstname,
-          emp_lastname: emp_lastname,
-          updated_by: updated_by,
-          time_date: currentTimestamp,
-          changes_made: 'Super-admin: '+ first_name+ ' '+ last_name + ' registered '+  user_name + ', Role: '+ emp_role+ ', Position: ' + emp_position
-        })
-        }else{
-          await knex('users_logs').insert({
-          user_id: id_master,
-          emp_firstname: emp_firstname,
-          emp_lastname: emp_lastname,
-          updated_by: updated_by,
-          time_date: currentTimestamp,
-          changes_made: 'Admin: '+ first_name+ ' '+ last_name + ' registered '+  user_name + ', Role: '+ emp_role+ ', Position: ' + emp_position
-        })
-        }
+    const currentUserPosition = currentUserData.emp_position
 
-        
-        
-      console.log('User registered');
-       res.status(200).json({ message: "User registered successfully" });
+    if (currentUserPosition === 'super-admin') {
+      await knex('users_logs').insert({
+        user_id: id_master,
+        emp_firstname: emp_firstname,
+        emp_lastname: emp_lastname,
+        updated_by: updated_by,
+        time_date: currentTimestamp,
+        changes_made: 'Super-admin: ' + first_name + ' ' + last_name + ' registered ' + user_name + ', Role: ' + emp_role + ', Position: ' + emp_position
+      })
+    } else {
+      await knex('users_logs').insert({
+        user_id: id_master,
+        emp_firstname: emp_firstname,
+        emp_lastname: emp_lastname,
+        updated_by: updated_by,
+        time_date: currentTimestamp,
+        changes_made: 'Admin: ' + first_name + ' ' + last_name + ' registered ' + user_name + ', Role: ' + emp_role + ', Position: ' + emp_position
+      })
+    }
 
-    }catch(err){
-          console.error("Registration error:", err); // show actual error
-      res.status(500).json({ error: "Registration failed", details: err.message });
-      }
-  });
 
-router.get('/useredit', async (req,res,next)=> {
-  try{
+
+    console.log('User registered');
+    res.status(200).json({ message: "User registered successfully" });
+
+  } catch (err) {
+    console.error("Registration error:", err); // show actual error
+    res.status(500).json({ error: "Registration failed", details: err.message });
+  }
+});
+
+router.get('/useredit', async (req, res, next) => {
+  try {
     const getUser = await Users.findAll({
-      where:{
+      where: {
         id_master: req.query.id
       }
     })
     console.log(getUser)
     res.json(getUser[0]);
-  }catch(err){
+  } catch (err) {
     console.error('Error fetching user data', err);
-    res.status(500).json({error: 'Failed to fetch request'});
+    res.status(500).json({ error: 'Failed to fetch request' });
   }
-}) 
+})
 
 
 
@@ -170,122 +170,128 @@ router.post('/update-user', async (req, res) => {
 
 
 
-    var db = new Sequelize(process.env.DATABASE, process.env.USER, process.env.PASSWORD,{
-      host: process.env.SERVER,
-      dialect: "mssql",
-      port: parseInt(process.env.APP_SERVER_PORT),
-    });  
+var db = new Sequelize(process.env.DATABASE, process.env.USER, process.env.PASSWORD, {
+  host: process.env.SERVER,
+  dialect: "mssql",
+  port: parseInt(process.env.APP_SERVER_PORT),
+});
 
-    const { DataTypes } = Sequelize;
-    
-    const Requests = db.define('requests_master',{
-        request_id:{
-            type:DataTypes.INTEGER,
-            primaryKey: true
-        },
-        request_status:{
-            type:DataTypes.STRING,
-        },
-        comm_Area:{
-            type:DataTypes.STRING,          
-        },
-        comm_Act:{
-            type: DataTypes.STRING,
-        },
-        date_Time:{
-            type: DataTypes.STRING,
-        },
-        comm_Venue:{ 
-            type:DataTypes.STRING,
-        },
-        comm_Guest:{
-            type:DataTypes.STRING,
-        },
-        comm_Docs:{
-            type:DataTypes.STRING,
-        },
-        comm_Emps:{
-            type:DataTypes.STRING,
-        },
-        comm_Benef:{
-            type:DataTypes.STRING,
-        },
-        comrelofficer:{
-          type:DataTypes.STRING,
-        },
-        comrelthree:{
-          type:DataTypes.STRING,
-        },
-        comreldh:{
-          type:DataTypes.STRING,
-        },
-        created_by:{
-          type:DataTypes.STRING,
-        },
-        created_at:{
-          type:DataTypes.STRING
-        },
-        comment_id:{
-          type:DataTypes.STRING
-        },
-        is_active:{
-          type:DataTypes.STRING,
-        },
-        comm_Desc:{
-          type:DataTypes.STRING,
-        },
-        comm_Category:{
-          type:DataTypes.STRING
-        },
-        created_at:{
-          type:DataTypes.STRING
-        }
-        
-    },{
-        freezeTableName: false,
-        timestamps: false,
-        createdAt: false,
-        updatedAt: false,
-        tableName: 'request_master'
-    })
+const { DataTypes } = Sequelize;
 
-    //VIEW HISTORY
-    router.get('/history', async(req,res,next)=>{
-      try{
-        const data = await knex('request_master').select('*'); 
-        res.json(data)
-        console.log(data)
-        data.forEach(row => console.log(row.request_status));
-      }catch(err){
-        console.error('ERROR FETCHING:', err);
-        res.status(500).json({error: 'Failed fetch data'})
-        }
-    });
+const Requests = db.define('requests_master', {
+  request_id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true
+  },
+  request_status: {
+    type: DataTypes.STRING,
+  },
+  comm_Area: {
+    type: DataTypes.STRING,
+  },
+  comm_Act: {
+    type: DataTypes.STRING,
+  },
+  date_Time: {
+    type: DataTypes.STRING,
+  },
+  comm_Venue: {
+    type: DataTypes.STRING,
+  },
+  comm_Guest: {
+    type: DataTypes.STRING,
+  },
+  comm_Docs: {
+    type: DataTypes.STRING,
+  },
+  comm_Emps: {
+    type: DataTypes.STRING,
+  },
+  comm_Benef: {
+    type: DataTypes.STRING,
+  },
+  comrelofficer: {
+    type: DataTypes.STRING,
+  },
+  comrelthree: {
+    type: DataTypes.STRING,
+  },
+  comreldh: {
+    type: DataTypes.STRING,
+  },
+  created_by: {
+    type: DataTypes.STRING,
+  },
+  created_at: {
+    type: DataTypes.STRING
+  },
+  comment_id: {
+    type: DataTypes.STRING
+  },
+  is_active: {
+    type: DataTypes.STRING,
+  },
+  comm_Desc: {
+    type: DataTypes.STRING,
+  },
+  comm_Category: {
+    type: DataTypes.STRING
+  },
+  created_at: {
+    type: DataTypes.STRING
+  },
+  updated_by: {
+    type: DataTypes.STRING
+  },
+  comreldh: {
+    type: DataTypes.BOOLEAN
+  }
 
-    router.get('/request-logs', async(req,res,next) => {
-        const getRequestLogs = await knex('request_logs').select('*');
-        res.json(getRequestLogs)
+}, {
+  freezeTableName: false,
+  timestamps: false,
+  createdAt: false,
+  updatedAt: false,
+  tableName: 'request_master'
+})
 
-    });
+//VIEW HISTORY
+router.get('/history', async (req, res, next) => {
+  try {
+    const data = await knex('request_master').select('*');
+    res.json(data)
+    console.log(data)
+    data.forEach(row => console.log(row.request_status));
+  } catch (err) {
+    console.error('ERROR FETCHING:', err);
+    res.status(500).json({ error: 'Failed fetch data' })
+  }
+});
+
+router.get('/request-logs', async (req, res, next) => {
+  const getRequestLogs = await knex('request_logs').select('*');
+  res.json(getRequestLogs)
+
+});
 
 
-    const DIR = './uploads';
+const DIR = './uploads';
 
-    const storage = multer.diskStorage({
-        destination: (req,file,cb) => {
-            cb(null,DIR);
-        },
-        filename: function (req, file, cb) { 
-        const original = file.originalname.replace(/\s+/g, '_'); 
-        const uniqueName = `${new Date().toISOString().replace(/[:.]/g, '-')}_${original}`;
-        cb(null, uniqueName);
-        }
-    });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, DIR);
+  },
+  filename: function (req, file, cb) {
+    const original = file.originalname.replace(/\s+/g, '_');
+    const uniqueName = `${new Date().toISOString().replace(/[:.]/g, '-')}_${original}`;
+    cb(null, uniqueName);
+  }
+});
 
-    const upload = multer({
-        storage,
-        limits: { fileSize: 200 * 1024 * 1024 } // 200 MB
-    });
+const upload = multer({
+  storage,
+  limits: { fileSize: 200 * 1024 * 1024 } // 200 MB
+});
 
 
 
@@ -297,18 +303,18 @@ router.get('/fetch-request-id', async (req, res) => {
     console.error('Error fetching all requests:', err);
     res.status(500).json({ message: 'Failed to fetch requests' });
   }
-});    
+});
 
 router.get('/fetch-upload-id', async (req, res) => {
   try {
     const data = await knex('upload_master').select('*');
     res.json(data);
-    
+
   } catch (err) {
     console.error('Error fetching all upload-id:', err);
     res.status(500).json({ message: 'Failed to fetch upload-id' });
   }
-});    
+});
 
 router.post('/add-request-form', upload.array('comm_Docs'), async (req, res) => {
   const currentTimestamp = new Date();
@@ -373,13 +379,13 @@ router.post('/add-request-form', upload.array('comm_Docs'), async (req, res) => 
             file_name: originalname,
             upload_date: currentTimestamp,
             upload_by: created_by,
-            updated_by: created_by,
+            updated_by: '',
             updated_at: currentTimestamp
           })
           .returning('upload_id');
 
         const upload_id = upload.upload_id || upload;
-          uploadIdToSave.push(upload_id);
+        uploadIdToSave.push(upload_id);
       }
 
       // 2. Update the request_master with file list + upload_id of first file
@@ -394,7 +400,7 @@ router.post('/add-request-form', upload.array('comm_Docs'), async (req, res) => 
 
     await knex('request_logs').insert({
       request_id: request_id,
-      request_status: 'request' ,
+      request_status: 'request',
       comm_Category,
       comm_Area,
       comm_Act,
@@ -410,17 +416,17 @@ router.post('/add-request-form', upload.array('comm_Docs'), async (req, res) => 
 });
 
 
-    // FETCH ALL VALUES VIA REQUEST_ID
-    router.get('/editform', async (req, res, next) => {
+// FETCH ALL VALUES VIA REQUEST_ID
+router.get('/editform', async (req, res, next) => {
   try {
-        const getRequest = await Requests.findAll({
-            where:{
-                request_id: req.query.id
-            }
-        })
-        console.log(getRequest)
-        res.json(getRequest[0]);
-  }catch(err){
+    const getRequest = await Requests.findAll({
+      where: {
+        request_id: req.query.id
+      }
+    })
+    console.log(getRequest)
+    res.json(getRequest[0]);
+  } catch (err) {
     console.error('Error fetching edit form data:', err);
     res.status(500).json({ error: 'Failed to fetch request' });
   }
@@ -505,7 +511,7 @@ router.post('/updateform', upload.array('comm_Docs'), async (req, res) => {
 
         const destPath = path.join(destFolder, filename);
         await fsp.rename(tempPath, destPath);
-      //Upload file to upload_master
+        //Upload file to upload_master
         const [upload] = await knex('upload_master')
           .insert({
             request_id,
@@ -543,15 +549,15 @@ router.post('/updateform', upload.array('comm_Docs'), async (req, res) => {
           updated_at: currentTimestamp,
         });
 
-        await knex('request_logs').insert({
-      request_id,
-      request_status,
-      comm_Category,
-      comm_Area,
-      comm_Act,
-      time_date: currentTimestamp,
-      changes_made: changes_made
-    })
+      await knex('request_logs').insert({
+        request_id,
+        request_status,
+        comm_Category,
+        comm_Area,
+        comm_Act,
+        time_date: currentTimestamp,
+        changes_made: changes_made
+      })
 
 
     } else {
@@ -603,7 +609,7 @@ router.post('/updateform', upload.array('comm_Docs'), async (req, res) => {
         }
       }
 
-      
+
       await knex('request_master')
         .where({ request_id })
         .update({
@@ -621,16 +627,16 @@ router.post('/updateform', upload.array('comm_Docs'), async (req, res) => {
           updated_at: currentTimestamp,
         });
 
-        
-    await knex('request_logs').insert({
-      request_id,
-      request_status,
-      comm_Category,
-      comm_Area,
-      comm_Act,
-      time_date: currentTimestamp,
-      changes_made: changes_made
-    });
+
+      await knex('request_logs').insert({
+        request_id,
+        request_status,
+        comm_Category,
+        comm_Area,
+        comm_Act,
+        time_date: currentTimestamp,
+        changes_made: changes_made
+      });
     }
 
     res.status(200).json({ message: "Request updated successfully" });
@@ -658,11 +664,11 @@ router.get('/delete-request', async (req, res) => {
     const files = await knex('request_master')
       .where({ request_id })
       .select('comm_Docs');
-    const requestData = await knex('request_master').where({request_id}).first();
+    const requestData = await knex('request_master').where({ request_id }).first();
 
-      await knex('request_logs').insert({
+    await knex('request_logs').insert({
       request_id: request_id,
-      request_status: requestData.request_status ,
+      request_status: requestData.request_status,
       comm_Category: requestData.comm_Category,
       comm_Area: requestData.comm_Area,
       comm_Act: requestData.comm_Act,
@@ -671,18 +677,18 @@ router.get('/delete-request', async (req, res) => {
 
     })
 
-   
+
     const fsPromises = require('fs').promises;
 
-for (const file of files) {
-  const fullFilePath = path.join(__dirname, '..', 'uploads', `request_${request_id}`, file.comm_Docs);
-  try {
-    await fsPromises.unlink(fullFilePath);
-    console.log(`Deleted file: ${fullFilePath}`);
-  } catch (err) {
-    console.error(`Failed to delete file ${fullFilePath}:`, err.message);
-  }
-}
+    for (const file of files) {
+      const fullFilePath = path.join(__dirname, '..', 'uploads', `request_${request_id}`, file.comm_Docs);
+      try {
+        await fsPromises.unlink(fullFilePath);
+        console.log(`Deleted file: ${fullFilePath}`);
+      } catch (err) {
+        console.error(`Failed to delete file ${fullFilePath}:`, err.message);
+      }
+    }
 
     await knex('request_master')
       .where({ request_id })
@@ -703,30 +709,30 @@ for (const file of files) {
 
 
 
-const Comments = db.define('comment_master',{
-        comment_id:{
-            type:DataTypes.INTEGER,
-            primaryKey: true
-        },
-        comment:{
-          type:DataTypes.STRING
-        },
-        created_by:{
-          type:DataTypes.STRING
-        },
-        created_at:{
-          type:DataTypes.STRING
-        },
-        request_id:{
-          type: DataTypes.INTEGER
-        }
-    },{
-        freezeTableName: false,
-        timestamps: false,
-        createdAt: false,
-        updatedAt: false,
-        tableName: 'comment_master'
-    })
+const Comments = db.define('comment_master', {
+  comment_id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true
+  },
+  comment: {
+    type: DataTypes.STRING
+  },
+  created_by: {
+    type: DataTypes.STRING
+  },
+  created_at: {
+    type: DataTypes.STRING
+  },
+  request_id: {
+    type: DataTypes.INTEGER
+  }
+}, {
+  freezeTableName: false,
+  timestamps: false,
+  createdAt: false,
+  updatedAt: false,
+  tableName: 'comment_master'
+})
 
 // GET comments for a specific request
 router.get('/comment/:request_id', async (req, res) => {
@@ -793,14 +799,14 @@ router.post('/comment', async (req, res) => {
     res.status(500).json({
       message: 'Failed to add comment',
       error: err.message,
-      stack: err.stack 
+      stack: err.stack
     });
   }
 });
 
 //Saving/Updating Informations Once Request Was Declined
 router.post('/comment-decline', async function (req, res, next) {
-  
+
   const currentTimestamp = new Date();
   const {
     emp_position,
@@ -811,44 +817,44 @@ router.post('/comment-decline', async function (req, res, next) {
 
   const requestInfo = await knex('request_master').where('request_id', request_id).first();
   const empInfo = await knex('users_master').where('id_master', id_master).first();
-  const emp_role = empInfo.emp_role;
+
   try {
-    
-      if (emp_position === 'comrelofficer'){
+
+    if (emp_position === 'comrelofficer') {
       await knex('request_master')
-      .where({ request_id})
-      .update({
-        request_status: 'reviewed',
-        updated_by: currentUser,
-        updated_at: currentTimestamp,
-        comrelofficer: 0,
-        comrelthree: 0,
-        comreldh: 0
-      });
+        .where({ request_id })
+        .update({
+          request_status: 'reviewed',
+
+          updated_at: currentTimestamp,
+          comrelofficer: 0,
+          comrelthree: 0,
+          comreldh: 0
+        });
     }
-    else if (emp_position === 'comrelthree'){
+    else if (emp_position === 'comrelthree') {
       await knex('request_master')
-      .where({ request_id})
-      .update({
-        request_status: 'reviewed',
-        updated_by: currentUser,
-        updated_at: currentTimestamp,
-        comrelofficer: 0,
-        comrelthree: 0,
-        comreldh: 0
-      });
+        .where({ request_id })
+        .update({
+          request_status: 'reviewed',
+
+          updated_at: currentTimestamp,
+          comrelofficer: 0,
+          comrelthree: 0,
+          comreldh: 0
+        });
     }
-    else if (emp_position === 'comreldh'){
+    else if (emp_position === 'comreldh') {
       await knex('request_master')
-      .where({ request_id})
-      .update({
-        request_status: 'reviewed',
-        updated_by: currentUser,
-        updated_at: currentTimestamp,
-        comrelofficer: 0,
-        comrelthree: 0,
-        comreldh: 0
-      });
+        .where({ request_id })
+        .update({
+          request_status: 'reviewed',
+
+          updated_at: currentTimestamp,
+          comrelofficer: 0,
+          comrelthree: 0,
+          comreldh: 0
+        });
     }
 
     await knex('request_logs').insert({
@@ -871,7 +877,7 @@ router.post('/comment-decline', async function (req, res, next) {
 // Saving/Updating Informations On Table Once Request Was Accepted
 router.post('/accept', async (req, res) => {
   const currentTimestamp = new Date();
-  const { request_id, currentUser, emp_position, id_master} = req.body;
+  const { request_id, currentUser, emp_position, id_master } = req.body;
 
   try {
     const requestInfo = await knex('request_master').where('request_id', request_id).first();
@@ -892,7 +898,7 @@ router.post('/accept', async (req, res) => {
     const galleryDir = path.join(categoryRequestDir, 'gallery');
     const filesDir = path.join(categoryRequestDir, 'files');
 
-  // User for COMREL OFFICER
+    // User for COMREL OFFICER
     if (emp_position === 'comrelofficer') {
       // Create target folders
       await fsp.mkdir(galleryDir, { recursive: true });
@@ -905,7 +911,7 @@ router.post('/accept', async (req, res) => {
         const ext = path.extname(file).toLowerCase();
         const srcPath = path.join('./uploads', file);
         const destFolder = galleryExtensions.includes(ext) ? galleryDir : filesDir;
-        const destRelativePath = path.join( category, `request_${request_id}`, galleryExtensions.includes(ext) ? 'gallery' : 'files', file);
+        const destRelativePath = path.join(category, `request_${request_id}`, galleryExtensions.includes(ext) ? 'gallery' : 'files', file);
         const destPath = path.join(destFolder, file);
 
         try {
@@ -931,7 +937,6 @@ router.post('/accept', async (req, res) => {
 
       const updateData = {
         request_status: 'Pending review for ComrelIII',
-        updated_by: currentUser,
         updated_at: currentTimestamp,
         comrelofficer: 1
       };
@@ -960,8 +965,7 @@ router.post('/accept', async (req, res) => {
       await knex('request_master')
         .where({ request_id })
         .update({
-          request_status: 'Pending review for Comrel DH',
-          updated_by: currentUser,
+          request_status: 'accepted',
           updated_at: currentTimestamp,
           comrelthree: 1
         });
@@ -972,7 +976,7 @@ router.post('/accept', async (req, res) => {
         comm_Act: requestInfo.comm_Act,
         comm_Area: requestInfo.comm_Area,
         time_date: currentTimestamp,
-        changes_made: `Comrel III ${currentUser} accepted the request. Changed the status to "Pending review for DH"`
+        changes_made: `Comrel III ${currentUser} accepted the request. Changed the status to "accepted"`
       })
     }
     // USER COMREL DEPARTMENT HEAD
@@ -981,7 +985,6 @@ router.post('/accept', async (req, res) => {
         .where({ request_id })
         .update({
           request_status: 'accepted',
-          updated_by: currentUser,
           updated_at: currentTimestamp,
           comreldh: 1
         });
@@ -995,7 +998,7 @@ router.post('/accept', async (req, res) => {
         changes_made: `ComrelOfficer DH ${currentUser} accepted the request. Changed the status to "accepted"`
       })
     }
-    
+
     res.status(200).json({ message: 'Request accepted successfully.' });
   } catch (err) {
     console.error('Accept error:', err);
@@ -1034,7 +1037,7 @@ router.post('/download-all', async (req, res) => {
 });
 
 //Sending A Email When Request Was Accepted
-router.post('/email-post', async function (req,res,next) {
+router.post('/email-post', async function (req, res, next) {
 
   console.log('EMAIL:', process.env.EMAIL);
   console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASS ? '*****' : 'MISSING');
@@ -1042,109 +1045,109 @@ router.post('/email-post', async function (req,res,next) {
 
   const time_Date = new Date().toLocaleString();
   const empInfo = await knex('users_master').where('id_master', req.body.id_master).first();
-  
-  try{
+
+  try {
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       secure: false,
 
       auth: {
-            user: process.env.EMAIL,
-            pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASS,
       },
       tls: {
-    rejectUnauthorized: false 
-  }
+        rejectUnauthorized: false
+      }
     });
 
     let email = [];
 
-    if(empInfo.emp_position === 'comrelofficer'){
+    if (empInfo.emp_position === 'comrelofficer') {
       const allOfficer = await knex.select('*').from('users_master')
-                          .where('emp_position', 'comrelthree');
-      console.log("User emails",allOfficer);
-
-      const userEmail = allOfficer.map(user => user.emp_email);
-      email = userEmail
-
-        var start = 'Good Day,<br><br>'
-                + 'This is to formally inform you that a request has been accepted by <b>'+ 'Comrel Officer'  
-                + ': '+ empInfo.emp_firstname.charAt(0).toUpperCase() + empInfo.emp_firstname.slice(1).toLowerCase()+ ' ' 
-                + empInfo.emp_lastname.charAt(0).toUpperCase() + empInfo.emp_lastname.slice(1).toLowerCase()
-                +'. </b>'
-                + 'To view and review the request, kindly click the link below. <br>'
-                + '<b>Link: </b>'+process.env.REACT_CLIENT +'<br>'
-                + 'Below is a summary of the request submitted under your position.<br>'
-
-        var body = '<ul>'+
-                  '<li>'+'<b>Request Id: </b>'+req.body.request_id +'</li>' +
-                  '<li>'+'<b>Activity: </b>'+req.body.comm_Act +'</li>' +
-                  '<li>'+'<b>Location: </b>'+req.body.comm_Area +'</li>' +
-                  '<li>'+'<b>Date & Time: </b>'+ req.body.date_Time +'</li>' +
-                  '<li><b>Description: </b><br>' + req.body.comm_Desc + '</li>' +
-              '</ul>'
-              + 'If you have concerns or questions, please do not hesitate to conctact the MIS Support Team.<br><br>'
-              + 'Wishing you a great day ahead.<br>'
-
-    }else if(empInfo.emp_position === 'comrelthree'){
-      const allOfficer = await knex.select('*').from('users_master')
-                          .where('emp_position', 'comreldh');
-      console.log("User emails",allOfficer);
-
-      const userEmail = allOfficer.map(user => user.emp_email);
-      email = userEmail
-
-        var start = 'Good Day,<br><br>'
-                + 'This is to formally inform you that a request has been accepted by <b>'+ 'Comrel III' 
-                + ': '+ empInfo.emp_firstname.charAt(0).toUpperCase() + empInfo.emp_firstname.slice(1).toLowerCase()+ ' ' 
-                + empInfo.emp_lastname.charAt(0).toUpperCase() + empInfo.emp_lastname.slice(1).toLowerCase()
-                +'. </b>'
-                + 'To view and review the request, kindly click the link below. <br>'
-                + '<b>Link: </b>'+process.env.REACT_CLIENT +'<br>'
-                + 'Below is a summary of the request submitted under your position.<br>'
-        var body = '<ul>'+
-                  '<li>'+'<b>Request Id: </b>'+req.body.request_id +'</li>' +
-                  '<li>'+'<b>Activity: </b>'+req.body.comm_Act +'</li>' +
-                  '<li>'+'<b>Location: </b>'+req.body.comm_Area +'</li>' +
-                  '<li>'+'<b>Date & Time: </b>'+ req.body.date_Time +'</li>' +
-                  '<li><b>Description: </b><br>' + req.body.comm_Desc + '</li>' +
-                  '</ul>'
-              + 'If you have concerns or questions, please do not hesitate to conctact the MIS Support Team.<br><br>'
-              + 'Wishing you a great day ahead.<br>'
-    }else if(empInfo.emp_position === 'comreldh'){
-      const allOfficer = await knex.select('*').from('users_master')
-                          .where('emp_position', 'comreldh');
-      console.log("User emails",allOfficer);
+        .where('emp_position', 'comrelthree');
+      console.log("User emails", allOfficer);
 
       const userEmail = allOfficer.map(user => user.emp_email);
       email = userEmail
 
       var start = 'Good Day,<br><br>'
-                + 'This is to formally inform you that a request has been accepted by <b>'+ 'Comrel Department Head' 
-                + ': '+ empInfo.emp_firstname.charAt(0).toUpperCase() + empInfo.emp_firstname.slice(1).toLowerCase()+ ' ' 
-                + empInfo.emp_lastname.charAt(0).toUpperCase() + empInfo.emp_lastname.slice(1).toLowerCase()
-                +'. </b>'
-                + 'To view and review the request, kindly click the link below. <br>'
-                + '<b>Link: </b>'+process.env.REACT_CLIENT +'<br>'
-                + 'Below is a summary of the request submitted under your position.<br>'
-      var body = '<ul>'+
-                  '<li>'+'<b>Request Id: </b>'+req.body.request_id +'</li>' +
-                  '<li>'+'<b>Activity: </b>'+req.body.comm_Act +'</li>' +
-                  '<li>'+'<b>Location: </b>'+req.body.comm_Area +'</li>' +
-                  '<li>'+'<b>Date & Time: </b>'+ req.body.date_Time +'</li>' +
-                  '<li><b>Description: </b><br>' + req.body.comm_Desc + '</li>' +
-              '</ul>'
-              + 'If you have concerns or questions, please do not hesitate to conctact the MIS Support Team.<br><br>'
-              + 'Wishing you a great day ahead.<br>'
+        + 'This is to formally inform you that a request has been accepted by <b>' + 'Comrel Officer'
+        + ': ' + empInfo.emp_firstname.charAt(0).toUpperCase() + empInfo.emp_firstname.slice(1).toLowerCase() + ' '
+        + empInfo.emp_lastname.charAt(0).toUpperCase() + empInfo.emp_lastname.slice(1).toLowerCase()
+        + '. </b>'
+        + 'To view and review the request, kindly click the link below. <br>'
+        + '<b>Link: </b>' + process.env.REACT_CLIENT + '<br>'
+        + 'Below is a summary of the request submitted under your position.<br>'
+
+      var body = '<ul>' +
+        '<li>' + '<b>Request Id: </b>' + req.body.request_id + '</li>' +
+        '<li>' + '<b>Activity: </b>' + req.body.comm_Act + '</li>' +
+        '<li>' + '<b>Location: </b>' + req.body.comm_Area + '</li>' +
+        '<li>' + '<b>Date & Time: </b>' + req.body.date_Time + '</li>' +
+        '<li><b>Description: </b><br>' + req.body.comm_Desc + '</li>' +
+        '</ul>'
+        + 'If you have concerns or questions, please do not hesitate to conctact the MIS Support Team.<br><br>'
+        + 'Wishing you a great day ahead.<br>'
+
+    } else if (empInfo.emp_position === 'comrelthree') {
+      const allOfficer = await knex.select('*').from('users_master')
+        .where('emp_position', 'comreldh');
+      console.log("User emails", allOfficer);
+
+      const userEmail = allOfficer.map(user => user.emp_email);
+      email = userEmail
+
+      var start = 'Good Day,<br><br>'
+        + 'This is to formally inform you that a request has been accepted by <b>' + 'Comrel III'
+        + ': ' + empInfo.emp_firstname.charAt(0).toUpperCase() + empInfo.emp_firstname.slice(1).toLowerCase() + ' '
+        + empInfo.emp_lastname.charAt(0).toUpperCase() + empInfo.emp_lastname.slice(1).toLowerCase()
+        + '. </b>'
+        + 'To view and review the request, kindly click the link below. <br>'
+        + '<b>Link: </b>' + process.env.REACT_CLIENT + '<br>'
+        + 'Below is a summary of the request submitted under your position.<br>'
+      var body = '<ul>' +
+        '<li>' + '<b>Request Id: </b>' + req.body.request_id + '</li>' +
+        '<li>' + '<b>Activity: </b>' + req.body.comm_Act + '</li>' +
+        '<li>' + '<b>Location: </b>' + req.body.comm_Area + '</li>' +
+        '<li>' + '<b>Date & Time: </b>' + req.body.date_Time + '</li>' +
+        '<li><b>Description: </b><br>' + req.body.comm_Desc + '</li>' +
+        '</ul>'
+        + 'If you have concerns or questions, please do not hesitate to conctact the MIS Support Team.<br><br>'
+        + 'Wishing you a great day ahead.<br>'
+    } else if (empInfo.emp_position === 'comreldh') {
+      const allOfficer = await knex.select('*').from('users_master')
+        .where('emp_position', 'comreldh');
+      console.log("User emails", allOfficer);
+
+      const userEmail = allOfficer.map(user => user.emp_email);
+      email = userEmail
+
+      var start = 'Good Day,<br><br>'
+        + 'This is to formally inform you that a request has been accepted by <b>' + 'Comrel Department Head'
+        + ': ' + empInfo.emp_firstname.charAt(0).toUpperCase() + empInfo.emp_firstname.slice(1).toLowerCase() + ' '
+        + empInfo.emp_lastname.charAt(0).toUpperCase() + empInfo.emp_lastname.slice(1).toLowerCase()
+        + '. </b>'
+        + 'To view and review the request, kindly click the link below. <br>'
+        + '<b>Link: </b>' + process.env.REACT_CLIENT + '<br>'
+        + 'Below is a summary of the request submitted under your position.<br>'
+      var body = '<ul>' +
+        '<li>' + '<b>Request Id: </b>' + req.body.request_id + '</li>' +
+        '<li>' + '<b>Activity: </b>' + req.body.comm_Act + '</li>' +
+        '<li>' + '<b>Location: </b>' + req.body.comm_Area + '</li>' +
+        '<li>' + '<b>Date & Time: </b>' + req.body.date_Time + '</li>' +
+        '<li><b>Description: </b><br>' + req.body.comm_Desc + '</li>' +
+        '</ul>'
+        + 'If you have concerns or questions, please do not hesitate to conctact the MIS Support Team.<br><br>'
+        + 'Wishing you a great day ahead.<br>'
     }
 
-   
+
 
     var privacy = '<br><p style="color:gray;font-size:12px">Privacy Notice: </p>' +
-          '<p style="color:gray;font-size:12px">The content of this email is intended for the person ' + 
-          'or entity to which it is addressed only. This email may contain confidential information. If you are not the person ' +
-          'to whom this message is addressed, be aware that any use, reproduction, or distribution of this message is strictly ' + 
-          'prohibited.</p>'  
+      '<p style="color:gray;font-size:12px">The content of this email is intended for the person ' +
+      'or entity to which it is addressed only. This email may contain confidential information. If you are not the person ' +
+      'to whom this message is addressed, be aware that any use, reproduction, or distribution of this message is strictly ' +
+      'prohibited.</p>'
 
 
     var Email = start + body + privacy
@@ -1155,20 +1158,20 @@ router.post('/email-post', async function (req,res,next) {
       subject: 'Community Relations Information System Notification',
       html: Email,
     }
-    
+
     await transporter.sendMail(mailOption);
-    res.status(200).json({message: "email sent succesfully"});
+    res.status(200).json({ message: "email sent succesfully" });
 
 
 
-  }catch(err){
+  } catch (err) {
     console.log('ERROR SENDING EMAIL:', err);
-    res.status(500).json({message: 'EMAIL FAILED TO SEND.'});
+    res.status(500).json({ message: 'EMAIL FAILED TO SEND.' });
   }
 
 })
 //Declining A Email When Request Was Declined
-router.post('/email-post-decline', async function (req,res,next) {
+router.post('/email-post-decline', async function (req, res, next) {
 
   console.log('EMAIL:', process.env.EMAIL);
   console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASS ? '*****' : 'MISSING');
@@ -1176,57 +1179,57 @@ router.post('/email-post-decline', async function (req,res,next) {
 
   const time_Date = new Date().toLocaleString();
   const empInfo = await knex('users_master').where('id_master', req.body.id_master).first();
-  
-  try{
+
+  try {
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       secure: false,
 
       auth: {
-            user: process.env.EMAIL,
-            pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASS,
       },
       tls: {
-    rejectUnauthorized: false 
-  }
+        rejectUnauthorized: false
+      }
     });
 
     let email = [];
 
-      const allOfficer = await knex.select('*').from('users_master')
-                          .where('emp_position', 'encoder');
-      console.log("User emails",allOfficer);
+    const allOfficer = await knex.select('*').from('users_master')
+      .where('emp_position', 'encoder');
+    console.log("User emails", allOfficer);
 
-      const userEmail = allOfficer.map(user => user.emp_email);
-      email = userEmail
+    const userEmail = allOfficer.map(user => user.emp_email);
+    email = userEmail
 
-        var start = 'Good Day,<br><br>'
-                + 'This is to formally inform you that a request has been reviewed by <b>'
-                + empInfo.emp_position.charAt(0).toUpperCase() + empInfo.emp_position.slice(1).toLowerCase()
-                + ': '+ empInfo.emp_firstname.charAt(0).toUpperCase() + empInfo.emp_firstname.slice(1).toLowerCase()+ ' ' 
-                + empInfo.emp_lastname.charAt(0).toUpperCase() + empInfo.emp_lastname.slice(1).toLowerCase()
-                +'. </b>'
-                + 'To view and review the request, kindly click the link below. <br>'
-                + '<b>Link: </b>'+process.env.REACT_CLIENT +'<br>'
-                + 'Below is a summary of the request submitted under your position.<br>'
+    var start = 'Good Day,<br><br>'
+      + 'This is to formally inform you that a request has been reviewed by <b>'
+      + empInfo.emp_position.charAt(0).toUpperCase() + empInfo.emp_position.slice(1).toLowerCase()
+      + ': ' + empInfo.emp_firstname.charAt(0).toUpperCase() + empInfo.emp_firstname.slice(1).toLowerCase() + ' '
+      + empInfo.emp_lastname.charAt(0).toUpperCase() + empInfo.emp_lastname.slice(1).toLowerCase()
+      + '. </b>'
+      + 'To view and review the request, kindly click the link below. <br>'
+      + '<b>Link: </b>' + process.env.REACT_CLIENT + '<br>'
+      + 'Below is a summary of the request submitted under your position.<br>'
 
-        var body = '<ul>'+
-                  '<li>'+'<b>Request Id: </b>'+req.body.request_id +'</li>' +
-                  '<li>'+'<b>Activity: </b>'+req.body.comm_Act +'</li>' +
-                  '<li>'+'<b>Location: </b>'+req.body.comm_Area +'</li>' +
-                  '<li>'+'<b>Date & Time: </b>'+ req.body.date_Time +'</li>' +
-                  '<li><b>Description: </b><br>' + req.body.comm_Desc + '</li>' +
-                  '<li><b>Comment: </b>' + req.body.comment + '</li>' +
-                  '</ul>'
-              + 'If you have concerns or questions, please do not hesitate to conctact the MIS Support Team.<br><br>'
-              + 'Wishing you a great day ahead.<br>'
-   
+    var body = '<ul>' +
+      '<li>' + '<b>Request Id: </b>' + req.body.request_id + '</li>' +
+      '<li>' + '<b>Activity: </b>' + req.body.comm_Act + '</li>' +
+      '<li>' + '<b>Location: </b>' + req.body.comm_Area + '</li>' +
+      '<li>' + '<b>Date & Time: </b>' + req.body.date_Time + '</li>' +
+      '<li><b>Description: </b><br>' + req.body.comm_Desc + '</li>' +
+      '<li><b>Comment: </b>' + req.body.comment + '</li>' +
+      '</ul>'
+      + 'If you have concerns or questions, please do not hesitate to conctact the MIS Support Team.<br><br>'
+      + 'Wishing you a great day ahead.<br>'
 
-        var privacy = '<br><p style="color:gray;font-size:12px">Privacy Notice: </p>' +
-              '<p style="color:gray;font-size:12px">The content of this email is intended for the person ' + 
-              'or entity to which it is addressed only. This email may contain confidential information. If you are not the person ' +
-              'to whom this message is addressed, be aware that any use, reproduction, or distribution of this message is strictly ' + 
-              'prohibited.</p>'  
+
+    var privacy = '<br><p style="color:gray;font-size:12px">Privacy Notice: </p>' +
+      '<p style="color:gray;font-size:12px">The content of this email is intended for the person ' +
+      'or entity to which it is addressed only. This email may contain confidential information. If you are not the person ' +
+      'to whom this message is addressed, be aware that any use, reproduction, or distribution of this message is strictly ' +
+      'prohibited.</p>'
 
 
     var Email = start + body + privacy
@@ -1237,17 +1240,17 @@ router.post('/email-post-decline', async function (req,res,next) {
       subject: 'Community Relations Information System Notification',
       html: Email,
     }
-    
-    await transporter.sendMail(mailOption);
-    res.status(200).json({message: "email sent succesfully"});
 
-  }catch(err){
+    await transporter.sendMail(mailOption);
+    res.status(200).json({ message: "email sent succesfully" });
+
+  } catch (err) {
     console.log('ERROR SENDING EMAIL:', err);
-    res.status(500).json({message: 'EMAIL FAILED TO SEND.'});
+    res.status(500).json({ message: 'EMAIL FAILED TO SEND.' });
   }
 })
 // Adding Form Request then send Email 
-router.post('/email-post-add', async function (req,res,next) {
+router.post('/email-post-add', async function (req, res, next) {
 
   console.log('EMAIL:', process.env.EMAIL);
   console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASS ? '*****' : 'MISSING');
@@ -1255,58 +1258,58 @@ router.post('/email-post-add', async function (req,res,next) {
 
   const time_Date = new Date().toLocaleString();
   const empInfo = await knex('users_master').where('id_master', req.body.id_master).first();
-  
-  try{
+
+  try {
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       secure: false,
 
       auth: {
-            user: process.env.EMAIL,
-            pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL,
+        pass: process.env.EMAIL_PASS,
       },
       tls: {
-    rejectUnauthorized: false 
-  }
+        rejectUnauthorized: false
+      }
     });
 
     let email = [];
 
-  
-      const allOfficer = await knex.select('*').from('users_master')
-                          .where('emp_position', 'comrelofficer');
-      console.log("User emails",allOfficer);
 
-      const userEmail = allOfficer.map(user => user.emp_email);
-      email = userEmail
+    const allOfficer = await knex.select('*').from('users_master')
+      .where('emp_position', 'comrelofficer');
+    console.log("User emails", allOfficer);
 
-        var start = 'Good Day,<br><br>'
-                + 'This is to formally inform you that a request has been submitted by <b>'
-                + empInfo.emp_position.charAt(0).toUpperCase() + empInfo.emp_position.slice(1).toLowerCase()  
-                + ': '+ empInfo.emp_firstname.charAt(0).toUpperCase() + empInfo.emp_firstname.slice(1).toLowerCase()+ ' ' 
-                + empInfo.emp_lastname.charAt(0).toUpperCase() + empInfo.emp_lastname.slice(1).toLowerCase()
-                +'. </b>'
-                + 'To view and review the request, kindly click the link below. <br>'
-                + '<b>Link: </b>'+process.env.REACT_CLIENT +'<br>'
-                + 'Below is a summary of the request submitted under your position.<br>'
+    const userEmail = allOfficer.map(user => user.emp_email);
+    email = userEmail
 
-        var body = '<ul>'+
-                  '<li>'+'<b>Activity: </b>'+req.body.comm_Act +'</li>' +
-                  '<li>'+'<b>Location: </b>'+req.body.comm_Area +'</li>' +
-                  '<li>'+'<b>Date & Time: </b>'+ time_Date +'</li>' +
-                  '<li><b>Description: </b><br>' + req.body.comm_Desc + '</li>' +
-              '</ul>'
-              + 'If you have concerns or questions, please do not hesitate to conctact the MIS Support Team.<br><br>'
-              + 'Wishing you a great day ahead.<br>'
+    var start = 'Good Day,<br><br>'
+      + 'This is to formally inform you that a request has been submitted by <b>'
+      + empInfo.emp_position.charAt(0).toUpperCase() + empInfo.emp_position.slice(1).toLowerCase()
+      + ': ' + empInfo.emp_firstname.charAt(0).toUpperCase() + empInfo.emp_firstname.slice(1).toLowerCase() + ' '
+      + empInfo.emp_lastname.charAt(0).toUpperCase() + empInfo.emp_lastname.slice(1).toLowerCase()
+      + '. </b>'
+      + 'To view and review the request, kindly click the link below. <br>'
+      + '<b>Link: </b>' + process.env.REACT_CLIENT + '<br>'
+      + 'Below is a summary of the request submitted under your position.<br>'
 
-  
-   
+    var body = '<ul>' +
+      '<li>' + '<b>Activity: </b>' + req.body.comm_Act + '</li>' +
+      '<li>' + '<b>Location: </b>' + req.body.comm_Area + '</li>' +
+      '<li>' + '<b>Date & Time: </b>' + time_Date + '</li>' +
+      '<li><b>Description: </b><br>' + req.body.comm_Desc + '</li>' +
+      '</ul>'
+      + 'If you have concerns or questions, please do not hesitate to conctact the MIS Support Team.<br><br>'
+      + 'Wishing you a great day ahead.<br>'
+
+
+
 
     var privacy = '<br><p style="color:gray;font-size:12px">Privacy Notice: </p>' +
-          '<p style="color:gray;font-size:12px">The content of this email is intended for the person ' + 
-          'or entity to which it is addressed only. This email may contain confidential information. If you are not the person ' +
-          'to whom this message is addressed, be aware that any use, reproduction, or distribution of this message is strictly ' + 
-          'prohibited.</p>'  
+      '<p style="color:gray;font-size:12px">The content of this email is intended for the person ' +
+      'or entity to which it is addressed only. This email may contain confidential information. If you are not the person ' +
+      'to whom this message is addressed, be aware that any use, reproduction, or distribution of this message is strictly ' +
+      'prohibited.</p>'
 
 
     var Email = start + body + privacy
@@ -1317,15 +1320,15 @@ router.post('/email-post-add', async function (req,res,next) {
       subject: 'Community Relations Information System Notification',
       html: Email,
     }
-    
+
     await transporter.sendMail(mailOption);
-    res.status(200).json({message: "email sent succesfully"});
+    res.status(200).json({ message: "email sent succesfully" });
 
 
 
-  }catch(err){
+  } catch (err) {
     console.log('ERROR SENDING EMAIL:', err);
-    res.status(500).json({message: 'EMAIL FAILED TO SEND.'});
+    res.status(500).json({ message: 'EMAIL FAILED TO SEND.' });
   }
 })
 
