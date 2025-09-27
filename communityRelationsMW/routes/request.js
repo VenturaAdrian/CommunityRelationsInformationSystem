@@ -243,6 +243,15 @@ const Requests = db.define('requests_master', {
   updated_by: {
     type: DataTypes.STRING
   },
+  is_locked: {
+    type: DataTypes.STRING
+  },
+  locked_by: {
+    type: DataTypes.STRING
+  },
+  locked_at: {
+    type: DataTypes.STRING
+  },
   comreldh: {
     type: DataTypes.BOOLEAN
   }
@@ -424,7 +433,7 @@ router.get('/editform', async (req, res, next) => {
         request_id: req.query.id
       }
     })
-    console.log(getRequest)
+    console.log('triggered /editform')
     res.json(getRequest[0]);
   } catch (err) {
     console.error('Error fetching edit form data:', err);
@@ -1332,7 +1341,47 @@ router.post('/email-post-add', async function (req, res, next) {
   }
 })
 
+router.post('/lock', async (req, res) => {
+  const { request_id, locked_by } = req.body;
 
+  const request = await knex('request_master').where({ request_id: request_id }).first();
+
+
+
+  if (request.is_locked && request.locked_by && request.locked_by !== locked_by) {
+    return res.status(403).json({
+      success: false,
+      message: `${request.locked_by} is currently working on this request. Please try again later.`,
+    })
+  }
+
+  await knex('request_master').where({ request_id: request_id }).update({
+    is_locked: 1,
+    locked_by: locked_by,
+    locked_at: new Date(),
+  });
+  res.json({ success: true, message: "Ticket locked/refreshed" });
+
+})
+
+router.post('/unlock', async (req, res) => {
+  try {
+    const { request_id, locked_by } = req.body;
+
+    if (!request_id || !locked_by) {
+      return res.status(400).json({ success: false, message: "Missing data" });
+    }
+
+    await knex("request_master")
+      .where({ request_id, locked_by })
+      .update({ is_locked: 0, locked_by: null, locked_at: null });
+
+    res.json({ success: true, message: "Ticket unlocked" });
+  } catch (err) {
+    console.error("Unlock error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+})
 
 
 

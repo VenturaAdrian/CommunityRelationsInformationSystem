@@ -16,7 +16,7 @@ import {
   Autocomplete,
   Snackbar,
   Alert,
-  Backdrop, 
+  Backdrop,
   CircularProgress
 } from "@mui/material";
 
@@ -57,7 +57,7 @@ export default function EditForm() {
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState(null);
   const [originalData, setOriginalData] = useState({});
@@ -184,71 +184,155 @@ export default function EditForm() {
   };
 
   //Save Edited Request
- const handleSave = () => {
-  const validationErrors = validateFields();
-  setErrors(validationErrors);
-  
-  if (Object.keys(validationErrors).length > 0) return;
+  const handleSave = () => {
+    const validationErrors = validateFields();
+    setErrors(validationErrors);
 
-  //Validation Position
-  let updatedStatus = status;
-  if (position === 'encoder' && status === 'reviewed') {
-    updatedStatus = 'request';
-  } else if(position === 'encoder'|| role ==='admin' && status !== 'reviewed'){
-    updatedStatus = status;
-  } else if ((position === 'comrelofficer' || position === 'comrelthree' || position === 'comreldh') && role ==='admin' ) {
-    updatedStatus = status;
-  }
-  
-  setLoading(true)
+    if (Object.keys(validationErrors).length > 0) return;
 
-  const changes_made = detectChanges();
+    //Validation Position
+    let updatedStatus = status;
+    if (position === 'encoder' && status === 'reviewed') {
+      updatedStatus = 'request';
+    } else if (position === 'encoder' || role === 'admin' && status !== 'reviewed') {
+      updatedStatus = status;
+    } else if ((position === 'comrelofficer' || position === 'comrelthree' || position === 'comreldh') && role === 'admin') {
+      updatedStatus = status;
+    }
 
-  const data = new FormData();
-  data.append("request_id", requestID);
-  data.append("comm_Area", formData.comm_Area.join(", "));
-  data.append("comm_Act", formData.comm_Act);
-  data.append("date_Time", formData.date_Time);
-  data.append("comm_Venue", formData.comm_Venue);
-  data.append("comm_Guest", formData.comm_Guest.join(", "));
-  data.append("comm_Emps", formData.comm_Emps.join(", "));
-  data.append("comm_Benef", formData.comm_Benef.join(", "));
-  data.append("comm_Category", formData.comm_Category);
-  data.append("comm_Desc", formData.comm_Desc);
-  data.append("created_by", createdby);
-  data.append("emp_position", position);
-  data.append("request_status", updatedStatus);
-  data.append("changes_made", changes_made);
+    setLoading(true)
 
-  if (selectedFiles.length > 0) {
-    selectedFiles.forEach(file => data.append("comm_Docs", file));
-  } else {
-    data.append("existingFileName", formData.comm_Docs);
-  }
+    const changes_made = detectChanges();
+
+    const data = new FormData();
+    data.append("request_id", requestID);
+    data.append("comm_Area", formData.comm_Area.join(", "));
+    data.append("comm_Act", formData.comm_Act);
+    data.append("date_Time", formData.date_Time);
+    data.append("comm_Venue", formData.comm_Venue);
+    data.append("comm_Guest", formData.comm_Guest.join(", "));
+    data.append("comm_Emps", formData.comm_Emps.join(", "));
+    data.append("comm_Benef", formData.comm_Benef.join(", "));
+    data.append("comm_Category", formData.comm_Category);
+    data.append("comm_Desc", formData.comm_Desc);
+    data.append("created_by", createdby);
+    data.append("emp_position", position);
+    data.append("request_status", updatedStatus);
+    data.append("changes_made", changes_made);
+
+    if (selectedFiles.length > 0) {
+      selectedFiles.forEach(file => data.append("comm_Docs", file));
+    } else {
+      data.append("existingFileName", formData.comm_Docs);
+    }
 
 
-  axios.post(`${config.baseApi1}/request/updateform`, data, {
-    headers: { "Content-Type": "multipart/form-data" },
-  })
-  .then(() => {
-      setSnackbarMsg('Form submitted successfully!');
-      setSnackbarSeverity('success');
+    axios.post(`${config.baseApi1}/request/updateform`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+      .then(() => {
+        setSnackbarMsg('Form submitted successfully!');
+        setSnackbarSeverity('success');
+        setSnackbarOpen(true);
+        setTimeout(() => window.location.replace('/comrel/pending'), 1000);
+
+      })
+      .catch((err) => {
+        setSnackbarMsg('Failed to submit.');
+        setSnackbarSeverity('error', err);
+        setSnackbarOpen(true);
+      });
+  };
+  const empInfo = JSON.parse(localStorage.getItem('user'));
+
+  const [lock, setLock] = useState(false);
+
+  useEffect(() => {
+    const { user_name } = empInfo || {};
+    const currentUser = user_name;
+    const currentRequestId = requestID;
+
+    const checker = async () => {
+      try {
+        await axios.post(`${config.baseApi1}/request/lock`, {
+          request_id: currentRequestId,
+          locked_by: currentUser,
+        });
+      } catch (err) {
+        setSnackbarMsg(err.response?.data?.message || "Someone is currently editing this request. Please try again later.");
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
+    }
+    checker();
+
+
+    const handleUnload = () => {
+      if (!currentRequestId || !currentUser) return;
+
+      const payload = JSON.stringify({
+        request_id: currentRequestId,
+        locked_by: currentUser,
+      });
+
+      const blob = new Blob([payload], { type: "application/json" });
+
+      navigator.sendBeacon(`${config.baseApi1}/request/unlock`, blob);
+    }
+
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      window.addEventListener("beforeunload", handleUnload);
+
+      if (currentRequestId && currentUser) {
+        axios.post(`${config.baseApi1}/request/unlock`, {
+          request_id: requestID,
+          locked_by: currentUser
+        }).catch(() => { });
+      }
+    }
+  }, [requestID, empInfo])
+
+
+
+  const lockChecker = async () => {
+    const updatedReq = await axios.get(`${config.baseApi1}/request/editform`, {
+      params: { id: requestID }
+    });
+    const RealtimeRequest = updatedReq.data;
+
+    if (RealtimeRequest.locked_by !== empInfo.user_name) {
+      //put disbale on edit button 
+      setSnackbarSeverity('error');
       setSnackbarOpen(true);
-      setTimeout(() => window.location.replace('/comrel/pending'), 1000);
+    } else {
+      setLock(true)
+      setSnackbarOpen(false);
+    }
 
-  })
-  .catch((err) => {
-    setSnackbarMsg('Failed to submit.');
-      setSnackbarSeverity('error', err);
-      setSnackbarOpen(true);
-  });
-};
+  }
+  // Refresh lock if form has changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+
+      axios.post(`${config.baseApi1}/request/lock`, {
+        request_id: requestID,
+        locked_by: empInfo.user_name,
+      });
+      lockChecker()
+
+    }, 1000); // refresh lock every 1s
+
+    return () => clearInterval(interval);
+  }, [requestID, empInfo.user_name]);
+
 
   // Validate if No data
   if (!formData) return <Typography>Loading...</Typography>;
 
   return (
-    <Box sx={{ mt: 4, p: 2, background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)', minHeight: '100vh' }}>
+    <Box sx={{ p: 2, background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)', minHeight: '100vh' }}>
       <Paper elevation={3} sx={{ p: 4, maxWidth: 800, mx: "auto", mt: 2, mb: 2 }}>
         <Typography variant="h5" mb={2} textAlign="center">
           Edit Request ID: {requestID}
@@ -273,6 +357,7 @@ export default function EditForm() {
                   helperText={errors.comm_Area ? "Required" : ""}
                 />
               )}
+              disabled={!lock}
             />
           </Grid>
 
@@ -293,10 +378,11 @@ export default function EditForm() {
                   helperText={errors.comm_Act ? "Required" : ""}
                 />
               )}
+              disabled={!lock}
             />
           </Grid>
 
-                    <Grid item xs={12}>
+          <Grid item xs={12}>
             <Autocomplete
               freeSolo
               options={categoryOptions}
@@ -315,6 +401,7 @@ export default function EditForm() {
                   helperText={errors.comm_Category ? "Required" : ""}
                 />
               )}
+              disabled={!lock}
             />
           </Grid>
 
@@ -329,6 +416,7 @@ export default function EditForm() {
               onChange={handleChange}
               error={!!errors.date_Time}
               helperText={errors.date_Time ? "Required" : ""}
+              disabled={!lock}
             />
           </Grid>
 
@@ -341,6 +429,7 @@ export default function EditForm() {
               onChange={handleChange}
               error={!!errors.comm_Venue}
               helperText={errors.comm_Venue ? "Required" : ""}
+              disabled={!lock}
             />
           </Grid>
 
@@ -362,12 +451,13 @@ export default function EditForm() {
                   helperText={errors.comm_Guest ? "Required" : ""}
                 />
               )}
+              disabled={!lock}
             />
           </Grid>
 
           <Grid item xs={12}>
             <InputLabel shrink>Replace Supporting Documents</InputLabel>
-            <Button variant="contained" component="label">
+            <Button variant="contained" component="label" disabled={!lock}>
               Upload Files
               <input
                 type="file"
@@ -375,11 +465,19 @@ export default function EditForm() {
                 multiple
                 ref={fileInputRef}
                 onChange={handleFileChange}
+
               />
             </Button>
 
             {formData.comm_Docs && selectedFiles.length === 0 && (
-              <Typography variant="body2" mt={1}>
+              <Typography
+                variant="body2"
+                sx={{
+                  display: 'block',      // ensures it takes full width
+                  mt: 1,                 // top margin (theme.spacing(1))
+                  wordBreak: 'break-word'// wrap long filenames
+                }}
+              >
                 Current Files: {formData.comm_Docs}
               </Typography>
             )}
@@ -427,6 +525,7 @@ export default function EditForm() {
                   helperText={errors.comm_Emps ? "Required" : ""}
                 />
               )}
+              disabled={!lock}
             />
           </Grid>
 
@@ -448,6 +547,7 @@ export default function EditForm() {
                   helperText={errors.comm_Benef ? "Required" : ""}
                 />
               )}
+              disabled={!lock}
             />
           </Grid>
 
@@ -462,17 +562,18 @@ export default function EditForm() {
               onChange={handleChange}
               error={!!errors.comm_Desc}
               helperText={errors.comm_Desc ? "Required" : ""}
+              disabled={!lock}
             />
           </Grid>
 
           <Grid item xs={12} textAlign="center">
-            <Button variant="contained" onClick={handleSave} sx={{ mr: 2 }}>
+            <Button variant="contained" onClick={handleSave} sx={{ mr: 2 }} disabled={!lock}>
               SAVE
             </Button>
           </Grid>
         </Grid>
       </Paper>
-      
+
       {/* Alert/Loading Components */}
       <Snackbar
         open={snackbarOpen}
@@ -489,7 +590,7 @@ export default function EditForm() {
           {snackbarMsg}
         </Alert>
       </Snackbar>
-    <Backdrop
+      <Backdrop
         open={loading}
         sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
       >

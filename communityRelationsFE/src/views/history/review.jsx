@@ -279,11 +279,61 @@ export default function Review() {
     }
   };
 
-  //Navigate Edit Page
-  const handleEdit = () => {
+
+  const [lock, setLock] = useState(true)
+  // Edit Page
+  const handleEdit = async () => {
     const params = new URLSearchParams({ id: requestID });
+    const empInfo = JSON.parse(localStorage.getItem('user'));
+    const updatedReq = await axios.get(`${config.baseApi1}/request/editform`, {
+      params: { id: requestID }
+    });
+    const RealtimeRequest = updatedReq.data;
+    if (RealtimeRequest.is_locked === '1') {
+      setLock(false)
+      setSnackbarMsg('Someone is currently editing this request. Please try again later.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+    else if (RealtimeRequest.is_locked === '0') {
+      try {
+        await axios.post(`${config.baseApi1}/request/lock`, {
+          request_id: requestID,
+          locked_by: empInfo?.user_name || 'unknown'
+        })
+      } catch (err) {
+        alert(err.response?.data?.message || "Ticket locked by another user")
+      }
+    }
+
     navigate(`/edit?${params.toString()}`)
   };
+
+  useEffect(() => {
+
+
+    const interval = setInterval(async () => {
+      const updatedReq = await axios.get(`${config.baseApi1}/request/editform`, {
+        params: { id: requestID }
+      });
+      const RealtimeRequest = updatedReq.data;
+
+      if (RealtimeRequest.is_locked === '1') {
+        setSnackbarMsg('Someone is currently editing this request. Please try again later.');
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+        setLock(false)
+      }
+      else if (RealtimeRequest.is_locked === '0' || RealtimeRequest.is_locked === null) {
+        setLock(true)
+        setSnackbarOpen(false);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+
+  }, [])
 
   return (
     <Box
@@ -309,11 +359,11 @@ export default function Review() {
               }}
             >
               {ShowEditDelete() && (
-                <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1 }}>
-                  <IconButton onClick={handleEdit} sx={{ color: 'green' }}>
+                <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1 }} >
+                  <IconButton onClick={handleEdit} sx={{ color: 'green' }} disabled={!lock}>
                     <EditIcon />
                   </IconButton>
-                  <IconButton onClick={handleDelete} sx={{ color: 'red' }}>
+                  <IconButton onClick={handleDelete} sx={{ color: 'red' }} disabled={!lock}>
                     <DeleteIcon />
                   </IconButton>
                 </Box>
