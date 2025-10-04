@@ -41,9 +41,11 @@ export default function Review() {
   const [position, setPosition] = useState('');
   const [role, setRole] = useState('');
   const [status, setStatus] = useState('');
-  const [accepted, setAccepted] = useState(false);
+
   const [showComments, setShowComments] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const [lockActive, setLockActive] = useState(false); // 🔑 controls lock interval
 
   const navigate = useNavigate();
   const commentRef = useRef(null);
@@ -196,6 +198,15 @@ export default function Review() {
         date_Time: formData.date_Time
       });
 
+      // 🔓 Unlock after submitting
+      const empInfo = JSON.parse(localStorage.getItem('user'));
+      await axios.post(`${config.baseApi1}/request/unlock`, {
+        request_id: requestID,
+        locked_by: empInfo?.user_name,
+      });
+
+      setLockActive(false); // stop lock interval
+
 
       setSnackbarMsg(res.data.message || 'Your comment was successfully submitted.');
       setSnackbarSeverity('success');
@@ -236,10 +247,14 @@ export default function Review() {
   };
 
   //Decline Function
-  const handleDecline = () => {
+  const handleDecline = async () => {
+    const empInfo = JSON.parse(localStorage.getItem('user'));
     setShowComments(true);
+    setLockActive(true); // 🔒 Start locking
     setTimeout(() => commentRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
   };
+
+
   //Accept Function
   const handleAccept = async () => {
     try {
@@ -264,7 +279,7 @@ export default function Review() {
       });
 
       setFormData(updatedReq.data);
-      setAccepted(true);
+
 
       setSnackbarMsg(res.data.message || 'Your have succesfully accpeted the request.');
       setSnackbarSeverity('success');
@@ -279,7 +294,7 @@ export default function Review() {
     }
   };
 
-
+  const empInfo = JSON.parse(localStorage.getItem('user'));
   const [lock, setLock] = useState(true)
   // Edit Page
   const handleEdit = async () => {
@@ -289,7 +304,8 @@ export default function Review() {
       params: { id: requestID }
     });
     const RealtimeRequest = updatedReq.data;
-    if (RealtimeRequest.is_locked === '1') {
+    if (RealtimeRequest.is_locked === '1' && RealtimeRequest.locked_by !== empInfo.user_name) {
+      console.log(RealtimeRequest.user_name)
       setLock(false)
       setSnackbarMsg('Someone is currently editing this request. Please try again later.');
       setSnackbarSeverity('error');
@@ -310,22 +326,25 @@ export default function Review() {
     navigate(`/edit?${params.toString()}`)
   };
 
+  //
   useEffect(() => {
 
-
     const interval = setInterval(async () => {
+      const empInfo = JSON.parse(localStorage.getItem('user'));
       const updatedReq = await axios.get(`${config.baseApi1}/request/editform`, {
         params: { id: requestID }
       });
       const RealtimeRequest = updatedReq.data;
 
-      if (RealtimeRequest.is_locked === '1') {
+      if (RealtimeRequest.is_locked === '1' && RealtimeRequest.locked_by !== empInfo.user_name) {
         setSnackbarMsg('Someone is currently editing this request. Please try again later.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
         setLock(false)
+
+
       }
-      else if (RealtimeRequest.is_locked === '0' || RealtimeRequest.is_locked === null) {
+      else if (RealtimeRequest.is_locked === '0' || RealtimeRequest.is_locked === null || RealtimeRequest.locked_by === empInfo.user_name) {
         setLock(true)
         setSnackbarOpen(false);
       }
@@ -334,6 +353,59 @@ export default function Review() {
     return () => clearInterval(interval);
 
   }, [])
+
+  // auto lock unlock
+
+
+  useEffect(() => {
+    if (!lockActive) return;
+    const { user_name, role, position } = empInfo || {};
+    const currentUser = user_name;
+    const currentRequestId = requestID;
+
+    const checker = async () => {
+      try {
+        await axios.post(`${config.baseApi1}/request/lock`, {
+          request_id: currentRequestId,
+          locked_by: currentUser,
+        });
+      } catch (err) {
+        setSnackbarMsg(err.response?.data?.message || "Someone is currently editing this request. Please try again later.");
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
+      }
+    };
+
+    checker();
+
+    const handleUnload = () => {
+      if (!currentRequestId || !currentUser) return;
+
+
+      const payload = JSON.stringify({
+        request_id: currentRequestId,
+        locked_by: currentUser,
+      });
+
+      const blob = new Blob([payload], { type: "application/json" });
+      navigator.sendBeacon(`${config.baseApi1}/request/unlock`, blob);
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+
+      if (currentRequestId && currentUser) {
+        axios.post(`${config.baseApi1}/request/unlock`, {
+          request_id: requestID,
+          locked_by: currentUser
+        }).catch(() => { });
+      }
+
+    };
+  }, [requestID, empInfo, lockActive]);
+
 
   return (
     <Box
@@ -554,10 +626,10 @@ export default function Review() {
       {/* Accept/Decline Buttons */}
       {canShowDeclineAccept() && (
         <Stack mt={5} direction="row" spacing={2} justifyContent="center">
-          <Button variant="contained" color="error" onClick={handleDecline}>
+          <Button variant="contained" color="error" onClick={handleDecline} disabled={!lock}>
             Decline
           </Button>
-          <Button variant="contained" color="primary" onClick={handleAccept} disabled={accepted}>
+          <Button variant="contained" color="primary" onClick={handleAccept} disabled={!lock}>
             Accept
           </Button>
         </Stack>

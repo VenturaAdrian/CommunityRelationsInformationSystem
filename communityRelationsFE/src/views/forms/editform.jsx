@@ -243,10 +243,10 @@ export default function EditForm() {
         setSnackbarOpen(true);
       });
   };
-  const empInfo = JSON.parse(localStorage.getItem('user'));
+
 
   const [lock, setLock] = useState(false);
-
+  const empInfo = JSON.parse(localStorage.getItem('user'));
   useEffect(() => {
     const { user_name } = empInfo || {};
     const currentUser = user_name;
