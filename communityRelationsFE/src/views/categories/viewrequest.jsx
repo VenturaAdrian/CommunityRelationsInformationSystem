@@ -62,7 +62,7 @@ export default function ViewRequestPage() {
 
   useEffect(() => {
     const empInfo = JSON.parse(localStorage.getItem('user'));
-    if (empInfo.emp_position === ('encoder' || 'comrelofficer')) {
+    if (empInfo.emp_position === 'encoder' || 'comrelofficer') {
       setAccess(false);
     } else {
       setAccess(true)

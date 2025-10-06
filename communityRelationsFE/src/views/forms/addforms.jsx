@@ -101,6 +101,7 @@ export default function AddForm() {
 
   //Submit Request Form Function
   const handleSubmit = async (e) => {
+
     //Valication for super-admin role
     if (userInfo.emp_position === 'super-admin') {
       setSnackbarMsg('Unable to access, Change account to Comrel.');
@@ -157,6 +158,7 @@ export default function AddForm() {
       setCommBenef([]);
       setCommDesc('');
       setCommCategory('');
+      window.location.reload();
     } catch (err) {
       setSnackbarMsg('Failed to submit.');
       setSnackbarSeverity('error');

@@ -203,7 +203,7 @@ const Reports = () => {
   }, [data, chartMode]);
 
   return (
-    <Box sx={{ p: 3, minHeight: "100vh", background: "linear-gradient(to bottom, #fefce8, #fef9c3)" }}>
+    <Box sx={{ p: 3, minHeight: "100vh", background: 'linear-gradient(to bottom, #93c47d, #6aa84f, #2F5D0B)' }}>
       <Typography variant="h2" sx={{ mb: 2, fontWeight: 600, color: "#1b4332" }}>
         Request Analytics Dashboard
       </Typography>

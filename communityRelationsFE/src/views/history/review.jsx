@@ -19,7 +19,9 @@ import {
   Stack,
   Snackbar,
   Grid,
-  Alert
+  Alert,
+  Backdrop,
+  CircularProgress
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -31,6 +33,7 @@ export default function Review() {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMsg, setSnackbarMsg] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [loading, setLoading] = useState(false)
 
 
   const [formData, setFormData] = useState(null);
@@ -168,6 +171,7 @@ export default function Review() {
     if (!comment.trim()) return;
 
     try {
+      setLoading(true)
       await axios.post(`${config.baseApi1}/request/comment`, {
         comment,
         created_by: currentUser,
@@ -207,7 +211,7 @@ export default function Review() {
 
       setLockActive(false); // stop lock interval
 
-
+      setLoading(false)
       setSnackbarMsg(res.data.message || 'Your comment was successfully submitted.');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
@@ -227,12 +231,14 @@ export default function Review() {
   //Delete Function
   const confirmDelete = async () => {
     try {
+      setLoading(true)
       await axios.get(`${config.baseApi1}/request/delete-request`, {
         params: {
           request_id: requestID,
           currentUser: currentUser
         }
       });
+      setLoading(false)
       setSnackbarMsg('You have successfully deleted the request.');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
@@ -258,6 +264,7 @@ export default function Review() {
   //Accept Function
   const handleAccept = async () => {
     try {
+      setLoading(true)
       const res = await axios.post(`${config.baseApi1}/request/accept`, {
         request_id: requestID,
         emp_position: position,
@@ -280,11 +287,13 @@ export default function Review() {
 
       setFormData(updatedReq.data);
 
-
+      setLoading(false)
       setSnackbarMsg(res.data.message || 'Your have succesfully accpeted the request.');
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
+
       setTimeout(() => window.location.replace('/comrel/pending'), 1000);
+
 
     } catch (err) {
       console.error('Accept request error:', err);
@@ -298,6 +307,7 @@ export default function Review() {
   const [lock, setLock] = useState(true)
   // Edit Page
   const handleEdit = async () => {
+
     const params = new URLSearchParams({ id: requestID });
     const empInfo = JSON.parse(localStorage.getItem('user'));
     const updatedReq = await axios.get(`${config.baseApi1}/request/editform`, {
@@ -314,6 +324,7 @@ export default function Review() {
     }
     else if (RealtimeRequest.is_locked === '0') {
       try {
+        setLoading(true)
         await axios.post(`${config.baseApi1}/request/lock`, {
           request_id: requestID,
           locked_by: empInfo?.user_name || 'unknown'
@@ -667,6 +678,13 @@ export default function Review() {
           {snackbarMsg}
         </Alert>
       </Snackbar>
+
+      <Backdrop
+        open={loading}
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      >
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </Box>
 
   );
