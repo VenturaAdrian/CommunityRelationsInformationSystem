@@ -16,7 +16,9 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  IconButton
+  IconButton,
+  Backdrop,
+  CircularProgress
 } from '@mui/material';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -32,6 +34,7 @@ export default function ViewRequestPage() {
   const [userData, setUserData] = useState([]);
   const [data, setData] = useState(null);
   const [allFiles, setAllFiles] = useState([]);
+  const [loading, setLoading] = useState(false)
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
@@ -62,10 +65,14 @@ export default function ViewRequestPage() {
 
   useEffect(() => {
     const empInfo = JSON.parse(localStorage.getItem('user'));
-    if (empInfo.emp_position === 'encoder' || 'comrelofficer') {
-      setAccess(false);
-    } else {
+    console.log(empInfo.emp_position)
+    if (empInfo.emp_position === 'comreldh') {
       setAccess(true)
+    } else if (empInfo.emp_position === 'comrelthree') {
+      setAccess(true)
+    }
+    else {
+      setAccess(false)
     }
   }, [])
 
@@ -104,6 +111,7 @@ export default function ViewRequestPage() {
     if (!declineComment.trim()) return;
 
     try {
+      setLoading(true)
       const empInfo = JSON.parse(localStorage.getItem('user'));
       // Example: send decline with comment
       await axios.post(`${config.baseApi1}/request/comment`, {
@@ -129,6 +137,8 @@ export default function ViewRequestPage() {
         date_time: data.date_Time
       })
       console.log("Declined with comment:", declineComment);
+      setLoading(false)
+      window.location.replace('/comrel/category')
       handleDeclineClose();
     } catch (err) {
       console.error("Error submitting decline:", err);
@@ -138,6 +148,7 @@ export default function ViewRequestPage() {
   //Download Function
   const handleDownloadAll = async () => {
     try {
+      setLoading(true)
       const response = await axios.post(
         `${config.baseApi1}/request/download-all`,
         {
@@ -154,6 +165,7 @@ export default function ViewRequestPage() {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      setLoading(false)
     } catch (error) {
       console.error('Error downloading all files:', error);
     }
@@ -342,6 +354,12 @@ export default function ViewRequestPage() {
             </Box>
           )}
         </CardContent>
+        <Backdrop
+          open={loading}
+          sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
       </Card>
     );
   };
