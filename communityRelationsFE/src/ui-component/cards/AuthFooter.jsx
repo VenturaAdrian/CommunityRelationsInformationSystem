@@ -19,7 +19,7 @@ export default function AuthFooter() {
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         by{' '}
         <Link
-          href="https://github.com/VenturaAdrian/CommunityRelationsInformationSystem"
+          href="https://www.linkedin.com/in/durkongontop"
           target="_blank"
           underline="hover"
           color="inherit"

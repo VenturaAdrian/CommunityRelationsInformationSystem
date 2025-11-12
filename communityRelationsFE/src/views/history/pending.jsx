@@ -91,7 +91,7 @@ export default function Pending() {
     }
   };
 
-  // ✅ Filter, Sort, Search including Category
+  //  Filter, Sort, Search including Category
   useEffect(() => {
     let filtered;
 
@@ -105,7 +105,7 @@ export default function Pending() {
 
     filtered = filtered
       .filter(item => !searchRequestId || item.request_id.toString().includes(searchRequestId))
-      .filter(item => !selectedCategory || item.comm_Category === selectedCategory) // ✅ category filter
+      .filter(item => !selectedCategory || item.comm_Category === selectedCategory) // category filter
       .sort((a, b) => sortOrder === 'newest' ? b.parsedDate - a.parsedDate : a.parsedDate - b.parsedDate);
 
     setFiltereddata(filtered);
@@ -167,7 +167,7 @@ export default function Pending() {
           }}
         />
 
-        {/* ✅ Category Filter */}
+        {/* Category Filter */}
         <FormControl sx={{ minWidth: 250 }}>
           <InputLabel sx={{ color: "#1b4332" }}>Filter by Category</InputLabel>
           <Select

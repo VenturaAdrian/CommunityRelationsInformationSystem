@@ -6,7 +6,7 @@ import Box from '@mui/material/Box';
 
 import NavItem from './NavItem';
 import NavGroup from './NavGroup';
-import getMenuItems from 'menu-items'; // ✅ now a function
+import getMenuItems from 'menu-items'; //  now a function
 
 import { useGetMenuMaster } from 'api/menu';
 

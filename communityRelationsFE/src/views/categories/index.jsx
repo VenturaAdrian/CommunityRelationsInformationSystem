@@ -20,6 +20,7 @@ import LocationCityIcon from '@mui/icons-material/LocationCity';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import { useNavigate } from 'react-router-dom';
 
+//Categories Icon
 const categoryIcons = {
   'Human Resource Development & Institutional Building (HRDIB)': PeopleIcon,
   'Enterprise Development & Networking': BusinessIcon,
@@ -34,6 +35,7 @@ const categoryIcons = {
   'Corporate Social Responsibility -Donations': FavoriteIcon,
 };
 
+//All SDMP Categories
 const sdmpCategories = [
   'Human Resource Development & Institutional Building (HRDIB)',
   'Enterprise Development & Networking',
@@ -45,6 +47,7 @@ const sdmpCategories = [
   'Development of Mining & GeoSciences & Technology',
 ];
 
+//OThers
 const otherCategories = [
   'Concessionaires',
   'Company Facilities',
@@ -120,7 +123,7 @@ export default function Category() {
     </Grid>
   );
 
-  
+
   return (
     <Box
       sx={{

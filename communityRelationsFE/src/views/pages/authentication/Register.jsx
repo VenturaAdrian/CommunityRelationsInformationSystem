@@ -29,7 +29,7 @@ export default function Register() {
 
   return (
     <AuthWrapper1>
-      <Grid container direction="column" justifyContent="flex-end" sx={{ minHeight: '100vh', mt:6 }}>
+      <Grid container direction="column" justifyContent="flex-end" sx={{ minHeight: '100vh', mt: 6 }}>
         <Grid item xs={12}>
           <Grid
             container
@@ -90,7 +90,7 @@ export default function Register() {
           <AuthFooter />
         </Grid>
 
-        {/* ✅ Snackbar component */}
+        {/* Snackbar component */}
         <Snackbar open={openSnackbar} autoHideDuration={3000} onClose={handleClose}>
           <Alert onClose={handleClose} severity="success" sx={{ width: '100%' }}>
             Successfully registered!

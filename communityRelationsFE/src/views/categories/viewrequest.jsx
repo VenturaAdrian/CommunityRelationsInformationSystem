@@ -171,13 +171,9 @@ export default function ViewRequestPage() {
     }
   };
 
-
-
-
   //View Component for Request Card Component
   const renderPostContent = () => {
     if (!data) return null;
-
     const {
       comm_Category,
       comm_Benef,

